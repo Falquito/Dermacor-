@@ -1,0 +1,19 @@
+name: Feature request
+description: Solicitar una mejora/feature
+title: "[feat]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: Qué problema resuelve
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación
+      description: Lista de criterios verificables
+    validations:
+      required: true

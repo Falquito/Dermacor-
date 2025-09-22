@@ -1,0 +1,28 @@
+name: Bug report
+description: Reportar un problema
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamiento esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamiento actual
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+      description: Incluye logs/capturas si aplica
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión/commit

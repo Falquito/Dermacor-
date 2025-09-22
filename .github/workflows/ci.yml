@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect Node project
+        id: detect
+        run: |
+          if [ -f package.json ]; then
+            echo "has_node=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_node=false" >> $GITHUB_OUTPUT
+          fi
+          if [ -f prisma/schema.prisma ]; then
+            echo "has_prisma=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_prisma=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.has_node == 'true'
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        if: steps.detect.outputs.has_node == 'true'
+        run: npm ci
+
+      - name: Wait for Postgres
+        if: steps.detect.outputs.has_node == 'true' && steps.detect.outputs.has_prisma == 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          until pg_isready -h localhost -p 5432 -U postgres; do echo "⏳ waiting db"; sleep 2; done
+
+      - name: Prisma generate
+        if: steps.detect.outputs.has_node == 'true' && steps.detect.outputs.has_prisma == 'true'
+        run: npx prisma generate
+
+      - name: Apply migrations (deploy)
+        if: steps.detect.outputs.has_node == 'true' && steps.detect.outputs.has_prisma == 'true' && ${{ hashFiles('prisma/migrations/**') != '' }}
+        run: npx prisma migrate deploy
+
+      - name: Lint
+        if: steps.detect.outputs.has_node == 'true'
+        run: npm run lint --if-present
+
+      - name: Build
+        if: steps.detect.outputs.has_node == 'true'
+        run: npm run build --if-present
+
+      - name: Test
+        if: steps.detect.outputs.has_node == 'true'
+        run: npm test --if-present
+
+      - name: No-op
+        if: steps.detect.outputs.has_node == 'false'
+        run: echo "No Node project yet; skipping CI steps successfully."

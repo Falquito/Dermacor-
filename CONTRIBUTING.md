@@ -37,6 +37,20 @@ git push origin feature/gestion-pacientes
 - Probar los cambios localmente
 - Aprobar solo si todo funciona correctamente
 
+#### 5. Después del Merge - Limpiar ramas
+```bash
+# Actualizar develop
+git checkout develop
+git pull origin develop
+
+# Eliminar rama local
+git branch -d feature/tu-funcionalidad
+
+# Limpiar referencias remotas
+git remote prune origin
+```
+**Nota**: GitHub eliminará automáticamente la rama remota si está configurado.
+
 ## 📋 Reportar Issues
 
 ### Bugs
@@ -97,10 +111,16 @@ npm run dev
 
 ### Comandos útiles
 ```bash
+# Desarrollo
 npm run lint        # Verificar código
 npm run build       # Build producción
 npm run type-check  # Verificar TypeScript
 npm run prisma:studio  # UI de base de datos
+
+# Git - Limpieza de ramas
+git branch --merged develop  # Ver ramas mergeadas
+git remote prune origin       # Limpiar referencias remotas
+git branch -d nombre-rama     # Eliminar rama local
 ```
 
 ## 👥 Responsabilidades del Equipo

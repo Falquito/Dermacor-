@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DatePicker } from '@/components/ui/date-picker'
-import { PatientFormData } from '@/types/patient'
+import { PatientFormData, PatientSubmitData } from '@/types/patient'
+import { User, Phone, MapPin, AlertCircle } from 'lucide-react'
 
 interface FormularioAltaPacienteProps {
-  onSubmit: (data: PatientFormData) => Promise<void>
+  onSubmit: (data: PatientSubmitData) => Promise<void>
   onCancel: () => void
   isLoading?: boolean
 }
@@ -19,11 +20,12 @@ export default function FormularioAltaPaciente({ onSubmit, onCancel, isLoading: 
   const [internalLoading, setInternalLoading] = useState(false)
   const isLoading = externalLoading || internalLoading
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [formData, setFormData] = useState({
+  
+  const [formData, setFormData] = useState<PatientFormData>({
     nombre: '',
     apellido: '',
     dni: '',
-    fechaNacimiento: undefined as Date | undefined,
+    fechaNacimiento: undefined,
     genero: '',
     telefono: '',
     celular: '',
@@ -42,67 +44,80 @@ export default function FormularioAltaPaciente({ onSubmit, onCancel, isLoading: 
     return dniNumber.length >= 7 && dniNumber.length <= 8
   }
 
-  const formatDNI = (value: string) => {
-    const numbers = value.replace(/\D/g, '')
-    return numbers.slice(0, 8)
+  const validateEmail = (email: string) => {
+    if (!email.trim()) return true // Email es opcional
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
   }
 
-  const formatPhone = (value: string) => {
-    const numbers = value.replace(/\D/g, '')
-    return numbers.slice(0, 15)
+  const validateAge = (fechaNacimiento: Date | undefined) => {
+    if (!fechaNacimiento) return false
+    const today = new Date()
+    const age = today.getFullYear() - fechaNacimiento.getFullYear()
+    const monthDiff = today.getMonth() - fechaNacimiento.getMonth()
+    const finalAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < fechaNacimiento.getDate()) ? age - 1 : age
+    return finalAge >= 0 && finalAge <= 150
   }
 
-  const handleInputChange = (field: string, value: string) => {
+  const validateName = (name: string) => {
+    return name.trim().length >= 2
+  }
+
+  const handleInputChange = (field: keyof PatientFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
   }
 
-  const handleDateChange = (date: Date | undefined) => {
-    setFormData(prev => ({ ...prev, fechaNacimiento: date }))
-    if (errors.fechaNacimiento) {
-      setErrors(prev => ({ ...prev, fechaNacimiento: '' }))
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
+
+    // Validaciones requeridas
+    if (!validateName(formData.nombre)) {
+      newErrors.nombre = 'El nombre debe tener al menos 2 caracteres'
     }
+    if (!validateName(formData.apellido)) {
+      newErrors.apellido = 'El apellido debe tener al menos 2 caracteres'
+    }
+    if (!validateDNI(formData.dni)) {
+      newErrors.dni = 'El DNI debe tener entre 7 y 8 dígitos'
+    }
+    if (!formData.fechaNacimiento) {
+      newErrors.fechaNacimiento = 'La fecha de nacimiento es requerida'
+    } else if (!validateAge(formData.fechaNacimiento)) {
+      newErrors.fechaNacimiento = 'La edad debe estar entre 0 y 150 años'
+    }
+    if (!formData.genero) {
+      newErrors.genero = 'El género es requerido'
+    }
+
+    // Validaciones opcionales pero con formato
+    if (formData.email && !validateEmail(formData.email)) {
+      newErrors.email = 'El formato del email no es válido'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setInternalLoading(true)
-    setErrors({})
-
-    // Validaciones del lado cliente
-    const newErrors: Record<string, string> = {}
     
-    if (!formData.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio'
-    if (!formData.apellido.trim()) newErrors.apellido = 'El apellido es obligatorio'
-    if (!formData.dni.trim()) newErrors.dni = 'El DNI es obligatorio'
-    else if (!validateDNI(formData.dni)) newErrors.dni = 'El DNI debe tener entre 7 y 8 dígitos'
-    if (!formData.fechaNacimiento) newErrors.fechaNacimiento = 'La fecha de nacimiento es obligatoria'
-    if (!formData.genero) newErrors.genero = 'El género es obligatorio'
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      setInternalLoading(false)
+    if (!validateForm()) {
       return
     }
 
+    setInternalLoading(true)
     try {
-      // Asegurar que fechaNacimiento no sea undefined
-      if (!formData.fechaNacimiento) {
-        setErrors({ fechaNacimiento: 'La fecha de nacimiento es obligatoria' })
-        setInternalLoading(false)
-        return
-      }
-
-      await onSubmit({
+      // Preparar los datos para envío, convirtiendo la fecha a ISO string
+      const dataToSubmit: PatientSubmitData = {
         ...formData,
-        fechaNacimiento: formData.fechaNacimiento
-      })
+        fechaNacimiento: formData.fechaNacimiento?.toISOString() || undefined
+      }
+      await onSubmit(dataToSubmit)
     } catch (error) {
-      console.error('Error al crear paciente:', error)
-      setErrors({ general: error instanceof Error ? error.message : 'Error al crear el paciente. Intente nuevamente.' })
+      console.error('Error al enviar el formulario:', error)
     } finally {
       setInternalLoading(false)
     }
@@ -110,242 +125,295 @@ export default function FormularioAltaPaciente({ onSubmit, onCancel, isLoading: 
 
   return (
     <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-gray-900">Alta de Paciente</DialogTitle>
+      <DialogContent className="max-w-[98vw] w-[98vw] lg:max-w-[95vw] xl:max-w-[90vw] 2xl:max-w-[85vw] max-h-[95vh] overflow-y-auto p-0">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="text-2xl font-bold text-gray-800">Alta de Paciente</DialogTitle>
         </DialogHeader>
 
-        {errors.general && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-600 text-sm">{errors.general}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Datos Personales */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Datos Personales</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="nombre">
-                  Nombre <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="nombre"
-                  value={formData.nombre}
-                  onChange={(e) => handleInputChange('nombre', e.target.value)}
-                  className={errors.nombre ? 'border-red-500' : ''}
-                  disabled={isLoading}
-                />
-                {errors.nombre && <p className="text-red-500 text-xs mt-1">{errors.nombre}</p>}
+        <form onSubmit={handleSubmit} className="p-6 pt-0">
+          <div className="space-y-8">
+            
+            {/* Datos Personales */}
+            <div className="bg-gradient-to-br from-emerald-50 to-green-50 p-6 rounded-xl border border-emerald-100/50 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-emerald-400 rounded-full">
+                  <User className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-emerald-600">Datos Personales</h3>
               </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 lg:gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="nombre" className="text-emerald-600 font-medium">Nombre *</Label>
+                  <Input
+                    id="nombre"
+                    type="text"
+                    placeholder="Ingrese el nombre"
+                    value={formData.nombre}
+                    onChange={(e) => handleInputChange('nombre', e.target.value)}
+                    className="border-2 border-emerald-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:bg-emerald-50/30 hover:border-emerald-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                  {errors.nombre && (
+                    <p className="text-red-500 text-sm">{errors.nombre}</p>
+                  )}
+                </div>
 
-              <div>
-                <Label htmlFor="apellido">
-                  Apellido <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="apellido"
-                  value={formData.apellido}
-                  onChange={(e) => handleInputChange('apellido', e.target.value)}
-                  className={errors.apellido ? 'border-red-500' : ''}
-                  disabled={isLoading}
-                />
-                {errors.apellido && <p className="text-red-500 text-xs mt-1">{errors.apellido}</p>}
+                <div className="space-y-2">
+                  <Label htmlFor="apellido" className="text-emerald-600 font-medium">Apellido *</Label>
+                  <Input
+                    id="apellido"
+                    type="text"
+                    placeholder="Ingrese el apellido"
+                    value={formData.apellido}
+                    onChange={(e) => handleInputChange('apellido', e.target.value)}
+                    className="border-2 border-emerald-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:bg-emerald-50/30 hover:border-emerald-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                  {errors.apellido && (
+                    <p className="text-red-500 text-sm">{errors.apellido}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dni" className="text-emerald-600 font-medium">DNI *</Label>
+                  <Input
+                    id="dni"
+                    type="text"
+                    placeholder="12345678"
+                    value={formData.dni}
+                    onChange={(e) => handleInputChange('dni', e.target.value)}
+                    className="border-2 border-emerald-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:bg-emerald-50/30 hover:border-emerald-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                  {errors.dni && (
+                    <p className="text-red-500 text-sm">{errors.dni}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fechaNacimiento" className="text-emerald-600 font-medium">Fecha de Nacimiento *</Label>
+                  <DatePicker
+                    date={formData.fechaNacimiento}
+                    onDateChange={(date) => setFormData(prev => ({ ...prev, fechaNacimiento: date }))}
+                    placeholder="Seleccionar fecha de nacimiento"
+                    disabled={isLoading}
+                    className="border-2 border-emerald-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:bg-emerald-50/30 hover:border-emerald-300 transition-all duration-200 shadow-sm"
+                  />
+                  {errors.fechaNacimiento && (
+                    <p className="text-red-500 text-sm">{errors.fechaNacimiento}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="genero" className="text-emerald-600 font-medium">Género *</Label>
+                  <Select
+                    value={formData.genero}
+                    onValueChange={(value) => handleInputChange('genero', value)}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="border-2 border-emerald-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:bg-emerald-50/30 hover:border-emerald-300 transition-all duration-200 shadow-sm" id="genero">
+                      <SelectValue placeholder="Seleccionar género" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Masculino">Masculino</SelectItem>
+                      <SelectItem value="Femenino">Femenino</SelectItem>
+                      <SelectItem value="Otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.genero && (
+                    <p className="text-red-500 text-sm">{errors.genero}</p>
+                  )}
+                </div>
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="dni">
-                  DNI <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="dni"
-                  placeholder="12345678"
-                  value={formData.dni}
-                  onChange={(e) => handleInputChange('dni', formatDNI(e.target.value))}
-                  className={errors.dni ? 'border-red-500' : ''}
-                  disabled={isLoading}
-                />
-                {errors.dni && <p className="text-red-500 text-xs mt-1">{errors.dni}</p>}
+            {/* Datos de Contacto */}
+            <div className="bg-gradient-to-br from-blue-50 to-sky-50 p-6 rounded-xl border border-blue-100/50 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-blue-400 rounded-full">
+                  <Phone className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-blue-600">Datos de Contacto</h3>
               </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="telefono" className="text-blue-600 font-medium">Teléfono Fijo</Label>
+                  <Input
+                    id="telefono"
+                    type="text"
+                    placeholder="011-4567-890"
+                    value={formData.telefono}
+                    onChange={(e) => handleInputChange('telefono', e.target.value)}
+                    className="border-2 border-blue-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:bg-blue-50/30 hover:border-blue-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="fechaNacimiento">
-                  Fecha de Nacimiento <span className="text-red-500">*</span>
-                </Label>
-                <DatePicker
-                  date={formData.fechaNacimiento}
-                  onDateChange={handleDateChange}
-                  placeholder="Seleccionar fecha de nacimiento"
-                  disabled={isLoading}
-                  className={errors.fechaNacimiento ? 'border-red-500' : ''}
-                />
-                {errors.fechaNacimiento && <p className="text-red-500 text-xs mt-1">{errors.fechaNacimiento}</p>}
+                <div className="space-y-2">
+                  <Label htmlFor="celular" className="text-blue-600 font-medium">Celular</Label>
+                  <Input
+                    id="celular"
+                    type="text"
+                    placeholder="11-1234-5678"
+                    value={formData.celular}
+                    onChange={(e) => handleInputChange('celular', e.target.value)}
+                    className="border-2 border-blue-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:bg-blue-50/30 hover:border-blue-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-blue-600 font-medium">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="paciente@email.com"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="border-2 border-blue-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:bg-blue-50/30 hover:border-blue-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-sm">{errors.email}</p>
+                  )}
+                </div>
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="genero">
-                  Género <span className="text-red-500">*</span>
-                </Label>
-                <Select value={formData.genero} onValueChange={(value) => handleInputChange('genero', value)}>
-                  <SelectTrigger className={errors.genero ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="Seleccionar género" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="M">Masculino</SelectItem>
-                    <SelectItem value="F">Femenino</SelectItem>
-                    <SelectItem value="Otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.genero && <p className="text-red-500 text-xs mt-1">{errors.genero}</p>}
+            {/* Dirección */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100/50 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-purple-400 rounded-full">
+                  <MapPin className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-purple-600">Dirección</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+                <div className="space-y-2 sm:col-span-2 lg:col-span-2">
+                  <Label htmlFor="direccion" className="text-purple-600 font-medium">Dirección</Label>
+                  <Input
+                    id="direccion"
+                    placeholder="Av. Corrientes 1234"
+                    value={formData.direccion}
+                    onChange={(e) => handleInputChange('direccion', e.target.value)}
+                    className="border-2 border-purple-200 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:bg-purple-50/30 hover:border-purple-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ciudad" className="text-purple-600 font-medium">Ciudad</Label>
+                  <Input
+                    id="ciudad"
+                    placeholder="CABA"
+                    value={formData.ciudad}
+                    onChange={(e) => handleInputChange('ciudad', e.target.value)}
+                    className="border-2 border-purple-200 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:bg-purple-50/30 hover:border-purple-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="provincia" className="text-purple-600 font-medium">Provincia</Label>
+                  <Input
+                    id="provincia"
+                    placeholder="Buenos Aires"
+                    value={formData.provincia}
+                    onChange={(e) => handleInputChange('provincia', e.target.value)}
+                    className="border-2 border-purple-200 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:bg-purple-50/30 hover:border-purple-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="codigoPostal" className="text-purple-600 font-medium">Código Postal</Label>
+                  <Input
+                    id="codigoPostal"
+                    placeholder="1414"
+                    value={formData.codigoPostal}
+                    onChange={(e) => handleInputChange('codigoPostal', e.target.value)}
+                    className="border-2 border-purple-200 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:bg-purple-50/30 hover:border-purple-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Contacto de Emergencia */}
+            <div className="bg-gradient-to-br from-orange-50 to-yellow-50 p-6 rounded-xl border border-orange-100/50 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-orange-400 rounded-full">
+                  <AlertCircle className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-orange-600">Contacto de Emergencia</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="contactoEmergenciaNombre" className="text-orange-600 font-medium">Nombre y Apellido</Label>
+                  <Input
+                    id="contactoEmergenciaNombre"
+                    placeholder="Juan Pérez"
+                    value={formData.contactoEmergenciaNombre}
+                    onChange={(e) => handleInputChange('contactoEmergenciaNombre', e.target.value)}
+                    className="border-2 border-orange-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:bg-orange-50/30 hover:border-orange-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contactoEmergenciaTelefono" className="text-orange-600 font-medium">Teléfono</Label>
+                  <Input
+                    id="contactoEmergenciaTelefono"
+                    placeholder="11-1234-5678"
+                    value={formData.contactoEmergenciaTelefono}
+                    onChange={(e) => handleInputChange('contactoEmergenciaTelefono', e.target.value)}
+                    className="border-2 border-orange-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:bg-orange-50/30 hover:border-orange-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contactoEmergenciaRelacion" className="text-orange-600 font-medium">Relación</Label>
+                  <Input
+                    id="contactoEmergenciaRelacion"
+                    placeholder="Hermano"
+                    value={formData.contactoEmergenciaRelacion}
+                    onChange={(e) => handleInputChange('contactoEmergenciaRelacion', e.target.value)}
+                    className="border-2 border-orange-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:bg-orange-50/30 hover:border-orange-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Datos de Contacto */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Datos de Contacto</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="telefono">Teléfono Fijo</Label>
-                <Input
-                  id="telefono"
-                  placeholder="011-4567-8901"
-                  value={formData.telefono}
-                  onChange={(e) => handleInputChange('telefono', formatPhone(e.target.value))}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="celular">Celular</Label>
-                <Input
-                  id="celular"
-                  placeholder="11-1234-5678"
-                  value={formData.celular}
-                  onChange={(e) => handleInputChange('celular', formatPhone(e.target.value))}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="paciente@email.com"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Dirección */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Dirección</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <Label htmlFor="direccion">Dirección</Label>
-                <Input
-                  id="direccion"
-                  placeholder="Av. Corrientes 1234"
-                  value={formData.direccion}
-                  onChange={(e) => handleInputChange('direccion', e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="ciudad">Ciudad</Label>
-                <Input
-                  id="ciudad"
-                  placeholder="CABA"
-                  value={formData.ciudad}
-                  onChange={(e) => handleInputChange('ciudad', e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="provincia">Provincia</Label>
-                <Input
-                  id="provincia"
-                  placeholder="Buenos Aires"
-                  value={formData.provincia}
-                  onChange={(e) => handleInputChange('provincia', e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="codigoPostal">Código Postal</Label>
-                <Input
-                  id="codigoPostal"
-                  placeholder="1414"
-                  value={formData.codigoPostal}
-                  onChange={(e) => handleInputChange('codigoPostal', e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Contacto de Emergencia */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Contacto de Emergencia</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="contactoEmergenciaNombre">Nombre y Apellido</Label>
-                <Input
-                  id="contactoEmergenciaNombre"
-                  placeholder="Juan Pérez"
-                  value={formData.contactoEmergenciaNombre}
-                  onChange={(e) => handleInputChange('contactoEmergenciaNombre', e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="contactoEmergenciaTelefono">Teléfono</Label>
-                <Input
-                  id="contactoEmergenciaTelefono"
-                  placeholder="11-1234-5678"
-                  value={formData.contactoEmergenciaTelefono}
-                  onChange={(e) => handleInputChange('contactoEmergenciaTelefono', formatPhone(e.target.value))}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="contactoEmergenciaRelacion">Relación</Label>
-                <Input
-                  id="contactoEmergenciaRelacion"
-                  placeholder="Hermano"
-                  value={formData.contactoEmergenciaRelacion}
-                  onChange={(e) => handleInputChange('contactoEmergenciaRelacion', e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Botones */}
-          <div className="flex justify-end space-x-4 pt-6 border-t">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-200 mt-8">
             <Button
               type="button"
               variant="outline"
               onClick={onCancel}
               disabled={isLoading}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={isLoading}
+              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              {isLoading ? 'Creando...' : 'Crear Paciente'}
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creando...
+                </>
+              ) : (
+                'Crear Paciente'
+              )}
             </Button>
           </div>
         </form>

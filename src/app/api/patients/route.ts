@@ -12,8 +12,20 @@ const createPatientSchema = z.object({
     .min(7, 'El DNI debe tener al menos 7 dígitos')
     .max(8, 'El DNI no puede tener más de 8 dígitos')
     .regex(/^\d+$/, 'El DNI solo debe contener números'),
-  fechaNacimiento: z.date({ message: 'La fecha de nacimiento es obligatoria' }),
-  genero: z.enum(['M', 'F', 'Otro'], { message: 'El género es obligatorio' }),
+  fechaNacimiento: z.string()
+    .min(1, 'La fecha de nacimiento es obligatoria')
+    .transform((str, ctx) => {
+      const date = new Date(str)
+      if (isNaN(date.getTime())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'La fecha de nacimiento debe ser una fecha válida'
+        })
+        return z.NEVER
+      }
+      return date
+    }),
+  genero: z.enum(['Masculino', 'Femenino', 'Otro'], { message: 'El género es obligatorio' }),
   
   // Datos de contacto (opcionales)
   telefono: z.string().optional(),

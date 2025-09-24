@@ -5,7 +5,7 @@ import { Patient } from '@prisma/client'
 import FormularioAltaPaciente from '@/components/FormularioAltaPaciente'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { PatientFormData } from '@/types/patient'
+import { PatientSubmitData } from '@/types/patient'
 
 interface PatientWithCreator extends Patient {
   creator: {
@@ -26,7 +26,7 @@ export default function MesaEntradaContent({
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleCreatePatient = async (patientData: PatientFormData) => {
+  const handleCreatePatient = async (patientData: PatientSubmitData) => {
     try {
       setIsLoading(true)
       

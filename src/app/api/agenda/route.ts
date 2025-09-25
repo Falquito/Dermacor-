@@ -41,12 +41,14 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const from = searchParams.get('from')
   const to = searchParams.get('to')
+  const statusParam = searchParams.get('status') // comma-separated statuses
+  const q = (searchParams.get('q') || '').trim().toLowerCase()
   if (!from || !to) return NextResponse.json([], { status: 200 })
 
   const fromDate = new Date(from)
   const toDate = new Date(to)
 
-  const data: Appointment[] = mock
+  let data: Appointment[] = mock
     .map((a) => ({
       ...a,
       professionalId: a.professionalId === 'mock-prof-1' ? professionalId : a.professionalId,
@@ -60,6 +62,21 @@ export async function GET(req: NextRequest) {
       return e > fromDate && s < toDate
     })
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+
+  if (statusParam) {
+    const allowed = statusParam.split(',').map((s) => s.trim()).filter(Boolean)
+    if (allowed.length) {
+      data = data.filter((d) => allowed.includes(d.status))
+    }
+  }
+
+  if (q) {
+    data = data.filter((d) =>
+      d.title.toLowerCase().includes(q) ||
+      (d.notes?.toLowerCase().includes(q) ?? false) ||
+      (d.patientId && d.patientId.toLowerCase().includes(q))
+    )
+  }
 
   return NextResponse.json(data, { status: 200 })
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react'
 import styles from './agenda.module.css'
 
 type AppointmentStatus = 'PENDING' | 'WAITING' | 'COMPLETED' | 'CANCELED'
@@ -67,16 +67,38 @@ function minutesSinceStartOfGrid(date: Date) {
   const { startHour } = getHoursRange()
   return date.getHours() * 60 + date.getMinutes() - startHour * 60
 }
-function totalGridMinutes() {
-  const { startHour, endHour } = getHoursRange()
-  return (endHour - startHour) * 60
-}
+// removed percent-based totalGridMinutes; using px-based layout now
 
 export default function AgendaPage() {
   const [view, setView] = useState<View>('week')
   const [date, setDate] = useState<Date>(new Date())
   const [loading, setLoading] = useState(false)
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [active, setActive] = useState<Appointment | null>(null)
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
+  const [anchorOffset, setAnchorOffset] = useState<{ dx: number; dy: number } | null>(null) // click offset within anchor (day view)
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus[]>([])
+  const [search, setSearch] = useState('')
+  const hoverTimerRef = useRef<number | null>(null)
+  const lastHoverIdRef = useRef<string | null>(null)
+
+  // Track anchor element rect on scroll/resize for dynamic popover positioning
+  useEffect(() => {
+    if (!active || !anchorEl) return
+    function update() {
+      if (!anchorEl) return
+      const rect = anchorEl.getBoundingClientRect()
+      setAnchorRect(rect)
+    }
+    update()
+    window.addEventListener('scroll', update, true)
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('resize', update)
+    }
+  }, [active, anchorEl])
 
   const { from, to } = useMemo(() => {
     if (view === 'day') {
@@ -99,6 +121,8 @@ export default function AgendaPage() {
           from: fmtISODate(from),
           to: fmtISODate(to),
         })
+        if (statusFilter.length) params.set('status', statusFilter.join(','))
+        if (search.trim()) params.set('q', search.trim())
         const res = await fetch(`/api/agenda?${params.toString()}`, { cache: 'no-store' })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data: Appointment[] = await res.json()
@@ -114,12 +138,29 @@ export default function AgendaPage() {
     return () => {
       ignore = true
     }
-  }, [from, to])
+  }, [from, to, statusFilter, search])
 
   const weekDays = useMemo(() => {
     const start = startOfWeek(date)
     return Array.from({ length: 7 }, (_, i) => addDays(start, i))
   }, [date])
+
+  const periodLabel = useMemo(() => {
+    const locale = undefined
+    if (view === 'day') {
+      return date.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })
+    }
+    if (view === 'week') {
+      const s = startOfWeek(date)
+      const e = endOfWeek(date)
+      const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()
+      if (sameMonth) {
+        return `${s.getDate()}–${e.getDate()} ${s.toLocaleDateString(locale, { month: 'short', year: 'numeric' })}`
+      }
+      return `${s.getDate()} ${s.toLocaleDateString(locale, { month: 'short' })} – ${e.getDate()} ${e.toLocaleDateString(locale, { month: 'short', year: 'numeric' })}`
+    }
+    return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+  }, [view, date])
 
   function goPrev() {
     if (view === 'day') setDate(addDays(date, -1))
@@ -135,6 +176,13 @@ export default function AgendaPage() {
     setDate(new Date())
   }
 
+  function navigateToAppointment(a: Appointment) {
+    // Placeholder: replace with actual navigation when detail page exists
+    console.log('navigate to appointment', a.id)
+    // Example future route:
+    // router.push(`/profesional/turnos/${a.id}`)
+  }
+
   function byDay(d: Date) {
     const y = d.getFullYear()
     const m = d.getMonth()
@@ -145,32 +193,159 @@ export default function AgendaPage() {
     })
   }
 
+  const toggleStatus = (s: AppointmentStatus) => {
+    setActive(null)
+    setAnchorRect(null)
+    setAnchorEl(null)
+    setAnchorOffset(null)
+    setStatusFilter((prev) => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])
+  }
+
+  const clearFilters = () => {
+    setStatusFilter([])
+    setSearch('')
+  }
+
+  const filteredAppointments = useMemo(() => {
+    // Server already filters, but keep client-side guard if user changes quickly
+    let data = appointments
+    if (statusFilter.length) data = data.filter(a => statusFilter.includes(a.status))
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      data = data.filter(a => a.title.toLowerCase().includes(q) || a.notes?.toLowerCase().includes(q) || a.patientId?.toLowerCase().includes(q))
+    }
+    return data
+  }, [appointments, statusFilter, search])
+
   return (
     <div className="min-h-screen bg-emerald-50">
       <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4">
           <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Agenda</h1>
-          <div className="flex gap-2">
-            <button onClick={goPrev} className="inline-flex items-center rounded-md border border-emerald-200 bg-white px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50" aria-label="Anterior">‹</button>
-            <button onClick={goToday} className="inline-flex items-center rounded-md border border-emerald-200 bg-white px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50">Hoy</button>
-            <button onClick={goNext} className="inline-flex items-center rounded-md border border-emerald-200 bg-white px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50" aria-label="Siguiente">›</button>
-            <div className="ml-3 inline-flex rounded-lg border border-emerald-200 overflow-hidden">
-              <button className={view === 'day' ? styles.viewActiveTail : styles.viewBtnTail} onClick={() => setView('day')}>Día</button>
-              <button className={view === 'week' ? styles.viewActiveTail : styles.viewBtnTail} onClick={() => setView('week')}>Semana</button>
-              <button className={view === 'month' ? styles.viewActiveTail : styles.viewBtnTail} onClick={() => setView('month')}>Mes</button>
-            </div>
-          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 lg:px-8 py-6 space-y-4">
-        <StatusLegend />
+        <div className="flex flex-col gap-3">
+          <div className={`flex flex-wrap items-center gap-2 bg-white ${styles.borderAgenda} rounded-lg p-3 shadow-sm`}>
+            <div className="flex items-center gap-2">
+              <button onClick={goPrev} className={`inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs md:text-sm hover:bg-emerald-50 ${styles.borderCtrl} ${styles.textAgenda}`} aria-label="Anterior">‹</button>
+              <button onClick={goToday} className={`inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs md:text-sm hover:bg-emerald-50 ${styles.borderCtrl} ${styles.textAgenda}`}>Hoy</button>
+              <button onClick={goNext} className={`inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs md:text-sm hover:bg-emerald-50 ${styles.borderCtrl} ${styles.textAgenda}`} aria-label="Siguiente">›</button>
+            </div>
+            <span className={`text-sm font-medium ml-1 ${styles.textAgenda}`}>{periodLabel}</span>
+            <div className={`inline-flex rounded-lg border ${styles.borderCtrl} overflow-hidden ml-auto`}>
+              <button className={view === 'day' ? styles.viewActiveTail : styles.viewBtnTail} onClick={() => setView('day')}><span >Día</span></button>
+              <button className={view === 'week' ? styles.viewActiveTail : styles.viewBtnTail} onClick={() => setView('week')}><span >Semana</span></button>
+              <button className={view === 'month' ? styles.viewActiveTail : styles.viewBtnTail} onClick={() => setView('month')}><span >Mes</span></button>
+            </div>
+          </div>
+          <div className={`flex flex-col gap-2 bg-white ${styles.borderAgenda} rounded-lg p-3 shadow-sm`}>
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="flex gap-1 flex-wrap items-center">
+                {(['PENDING','WAITING','COMPLETED','CANCELED'] as AppointmentStatus[]).map(s => {
+                  const active = statusFilter.includes(s)
+                  return (
+                    <button key={s} type="button" onClick={() => toggleStatus(s)}
+                      className={`px-2.5 py-1 text-xs md:text-sm rounded-md border ${active ? 'bg-emerald-600 text-white border-emerald-600' : `bg-white ${styles.textAgenda} ${styles.borderCtrl} hover:bg-emerald-50`}`}
+                    ><span >{STATUS_LABELS[s]}</span></button>
+                  )
+                })}
+              </div>
+              <div className="flex items-center gap-2 ml-auto w-full md:w-auto">
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar (paciente, título, nota)" 
+                  className={`flex-1 md:flex-none md:w-64 rounded-md border ${styles.borderCtrl} px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${styles.textAgenda}`}
+                />
+                {(statusFilter.length > 0 || search.trim()) && (
+                  <button onClick={clearFilters} className={`text-xs hover:underline ${styles.textAgenda}`}>Limpiar</button>
+                )}
+              </div>
+            </div>
+            <div className={`text-[11px] md:text-xs flex flex-wrap gap-3 ${styles.textAgenda}`}>
+              <span>Filtrando: {statusFilter.length ? statusFilter.map(s=>STATUS_LABELS[s]).join(', ') : 'Todos los estados'}</span>
+              {search && <span>Búsqueda: “{search}”</span>}
+              <span>Total: {filteredAppointments.length}</span>
+            </div>
+          </div>
+          <StatusLegend />
+        </div>
 
         {loading && <div className="text-sm text-emerald-700">Cargando…</div>}
 
-        {view === 'day' && <DayView date={date} items={byDay(date)} />}
-        {view === 'week' && <WeekView days={weekDays} items={appointments} />} 
-        {view === 'month' && <MonthView date={date} items={appointments} onSelectDay={setDate} />}
+        {view === 'day' && <DayView date={date} items={byDay(date).filter(a => filteredAppointments.includes(a))} onOpen={(a, el, point) => {
+          // Hover delay (200ms)
+          if (lastHoverIdRef.current !== a.id) {
+            if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current)
+            lastHoverIdRef.current = a.id
+          }
+          const doOpen = () => {
+            setActive(a)
+            setAnchorEl(el)
+            const rect = el.getBoundingClientRect()
+            setAnchorRect(rect)
+            if (point) {
+              setAnchorOffset({ dx: point.x - rect.left, dy: point.y - rect.top })
+            } else {
+              setAnchorOffset(null)
+            }
+          }
+          if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current)
+          hoverTimerRef.current = window.setTimeout(doOpen, 400)
+        }} onHoverLeave={() => { if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current) }} onClickOpen={(a: Appointment) => navigateToAppointment(a)} />}
+        {view === 'week' && <WeekView days={weekDays} items={filteredAppointments} onOpen={(a, el) => {
+          if (lastHoverIdRef.current !== a.id) {
+            if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current)
+            lastHoverIdRef.current = a.id
+          }
+          const doOpen = () => {
+            setActive(a)
+            setAnchorEl(el)
+            setAnchorRect(el.getBoundingClientRect())
+            setAnchorOffset(null)
+          }
+          if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current)
+          hoverTimerRef.current = window.setTimeout(doOpen, 400)
+        }} onHoverLeave={() => { if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current) }} onClickOpen={(a: Appointment) => navigateToAppointment(a)} />} 
+        {view === 'month' && (
+          <MonthView
+            date={date}
+            items={filteredAppointments}
+            onSelectDay={(d) => {
+              setDate(d)
+              setView('day')
+            }}
+            onOpen={(a, el) => {
+              if (lastHoverIdRef.current !== a.id) {
+                if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current)
+                lastHoverIdRef.current = a.id
+              }
+              const doOpen = () => {
+                setActive(a)
+                setAnchorEl(el)
+                setAnchorRect(el.getBoundingClientRect())
+                setAnchorOffset(null)
+              }
+              if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current)
+              hoverTimerRef.current = window.setTimeout(doOpen, 400)
+            }}
+            onHoverLeave={() => { if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current) }}
+            onClickOpen={(a: Appointment) => navigateToAppointment(a)}
+          />
+        )}
+        <AppointmentPopover
+          appointment={active}
+          anchorRect={anchorRect}
+          anchorOffset={anchorOffset}
+          onClose={() => {
+            setActive(null)
+            setAnchorRect(null)
+            setAnchorEl(null)
+            setAnchorOffset(null)
+          }}
+        />
       </main>
     </div>
   )
@@ -189,53 +364,67 @@ function StatusLegend() {
   )
 }
 
-function DayView({ date, items }: { date: Date; items: Appointment[] }) {
+function DayView({ date, items, onOpen, onHoverLeave, onClickOpen }: { date: Date; items: Appointment[]; onOpen: (a: Appointment, el: HTMLElement, point?: { x: number; y: number }) => void; onHoverLeave: () => void; onClickOpen: (a: Appointment) => void }) {
   const hours = Array.from({ length: getHoursRange().endHour - getHoursRange().startHour + 1 }, (_, i) => getHoursRange().startHour + i)
-  const total = totalGridMinutes()
+  const hourHeight = 56 // px per hour
   return (
-    <div className={styles.dayGrid} aria-label={`Agenda del ${date.toLocaleDateString()}`}>
-      <div className={styles.timeCol}>
-        {hours.map((h) => (
-          <div key={h} className={styles.timeCell}>
-            {String(h).padStart(2, '0')}:00
-          </div>
-        ))}
-      </div>
-      <div className={styles.dayCol}>
-        <div className={styles.eventsLayer}>
-          {items.map((a) => {
-            const s = new Date(a.start)
-            const e = new Date(a.end)
-            const top = Math.max(0, (minutesSinceStartOfGrid(s) / total) * 100)
-            const height = Math.max(8, ((e.getTime() - s.getTime()) / 60000 / total) * 100)
-            return (
-              <div
-                key={a.id}
-                className={`${styles.event} ${styles[`status_${a.status}`]}`}
-                style={{ top: `${top}%`, height: `${height}%` }}
-                title={`${a.title} (${STATUS_LABELS[a.status]})`}
-              >
-                <div className={styles.eventTitle}>{a.title}</div>
-                <div className={styles.eventTime}>
-                  {s.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {e.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            )
-          })}
+    <div className={styles.dayContainer} aria-label={`Agenda del ${date.toLocaleDateString()}`}>
+      <div className={styles.dayHeader}>
+        <div className={styles.timeCol} />
+        <div className={styles.headerCell}>
+          <div className={styles.headerDayName}>{date.toLocaleDateString(undefined, { weekday: 'long' })}</div>
+          <div className={styles.headerDayNum}>{date.getDate()}</div>
         </div>
-        <div className={styles.hourLines}>
-          {hours.map((h) => (
-            <div key={h} className={styles.hourLine} />
-          ))}
+      </div>
+      <div className={styles.dayScroll}>
+        <div className={styles.dayGrid}>
+          <div className={styles.timeCol}>
+            {hours.map((h) => (
+              <div key={h} className={styles.timeCell}>
+                {String(h).padStart(2, '0')}:00
+              </div>
+            ))}
+          </div>
+          <div className={styles.dayCol}>
+            <div className={styles.eventsLayer}>
+              {items.map((a) => {
+                const s = new Date(a.start)
+                const e = new Date(a.end)
+                const topPx = Math.max(0, (minutesSinceStartOfGrid(s) / 60) * hourHeight)
+                const heightPx = Math.max(18, ((e.getTime() - s.getTime()) / 60000 / 60) * hourHeight)
+                return (
+                  <div
+                    key={a.id}
+                    className={`${styles.event} ${styles[`status_${a.status}`]} status_${a.status}`}
+                    style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+                    title={`${a.title} (${STATUS_LABELS[a.status]})`}
+                    onMouseEnter={(e) => { onOpen(a, e.currentTarget as HTMLElement, { x: e.clientX, y: e.clientY }) }}
+                    onMouseMove={(e) => { onOpen(a, e.currentTarget as HTMLElement, { x: e.clientX, y: e.clientY }) }}
+                    onMouseLeave={() => { onHoverLeave() }}
+                    onClick={(e) => { e.stopPropagation(); onClickOpen(a) }}
+                  >
+                    <div className={styles.eventTitle}>
+                      <span className={styles.ellipsis}>{a.title}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div className={styles.hourLines}>
+              {hours.map((h) => (
+                <div key={h} className={styles.hourLine} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-function WeekView({ days, items }: { days: Date[]; items: Appointment[] }) {
+function WeekView({ days, items, onOpen, onHoverLeave, onClickOpen }: { days: Date[]; items: Appointment[]; onOpen: (a: Appointment, el: HTMLElement) => void; onHoverLeave: () => void; onClickOpen: (a: Appointment) => void }) {
   const hours = Array.from({ length: getHoursRange().endHour - getHoursRange().startHour + 1 }, (_, i) => getHoursRange().startHour + i)
-  const total = totalGridMinutes()
+  const hourHeight = 56
 
   function itemsForDay(d: Date) {
     return items.filter((a) => {
@@ -269,18 +458,21 @@ function WeekView({ days, items }: { days: Date[]; items: Appointment[] }) {
               {itemsForDay(d).map((a) => {
                 const s = new Date(a.start)
                 const e = new Date(a.end)
-                const top = Math.max(0, (minutesSinceStartOfGrid(s) / total) * 100)
-                const height = Math.max(8, ((e.getTime() - s.getTime()) / 60000 / total) * 100)
+                const topPx = Math.max(0, (minutesSinceStartOfGrid(s) / 60) * hourHeight)
+                const heightPx = Math.max(18, ((e.getTime() - s.getTime()) / 60000 / 60) * hourHeight)
                 return (
                   <div
                     key={a.id}
-                    className={`${styles.event} ${styles[`status_${a.status}`]}`}
-                    style={{ top: `${top}%`, height: `${height}%` }}
+                    className={`${styles.event} ${styles[`status_${a.status}`]} status_${a.status}`}
+                    style={{ top: `${topPx}px`, height: `${heightPx}px` }}
                     title={`${a.title} (${STATUS_LABELS[a.status]})`}
+                    onMouseEnter={(e) => { onOpen(a, e.currentTarget as HTMLElement) }}
+                    onMouseMove={(e) => { onOpen(a, e.currentTarget as HTMLElement) }}
+                    onClick={(e) => { e.stopPropagation(); onClickOpen(a) }}
+                    onMouseLeave={() => { onHoverLeave() }}
                   >
-                    <div className={styles.eventTitle}>{a.title}</div>
-                    <div className={styles.eventTime}>
-                      {s.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {e.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <div className={styles.eventTitle}>
+                      <span className={styles.ellipsis}>{a.title}</span>
                     </div>
                   </div>
                 )
@@ -298,7 +490,7 @@ function WeekView({ days, items }: { days: Date[]; items: Appointment[] }) {
   )
 }
 
-function MonthView({ date, items, onSelectDay }: { date: Date; items: Appointment[]; onSelectDay: (d: Date) => void }) {
+  function MonthView({ date, items, onSelectDay, onOpen, onHoverLeave, onClickOpen }: { date: Date; items: Appointment[]; onSelectDay: (d: Date) => void; onOpen: (a: Appointment, el: HTMLElement) => void; onHoverLeave: () => void; onClickOpen: (a: Appointment) => void }) {
   const start = startOfWeek(startOfMonth(date))
   const end = endOfWeek(endOfMonth(date))
   const days: Date[] = []
@@ -331,20 +523,117 @@ function MonthView({ date, items, onSelectDay }: { date: Date; items: Appointmen
           className={`${styles.monthCell} ${d.getMonth() === currentMonth ? '' : styles.monthCellMuted}`}
           onClick={() => onSelectDay(d)}
         >
-          <div className={styles.monthCellDate}>{d.getDate()}</div>
-          <div className={styles.monthEvents}>
-            {itemsForDay(d)
-              .slice(0, 3)
-              .map((a) => (
-                <div key={a.id} className={`${styles.monthEvent} ${styles[`status_${a.status}`]}`}>
-                  <span className={styles.monthEventDot} />
-                  <span className={styles.ellipsis}>{a.title}</span>
-                </div>
-              ))}
-            {itemsForDay(d).length > 3 && <div className={styles.more}>+{itemsForDay(d).length - 3} más</div>}
+          <div className={styles.monthCellDateWrap}>
+            <span className={styles.monthCellDate}>{d.getDate()}</span>
+            {itemsForDay(d).length > 0 && (
+              <span className={`${styles.countBadge} ${itemsForDay(d).length > 6 ? styles.countBadgeDense : ''}`}>{itemsForDay(d).length}</span>
+            )}
           </div>
+          {(() => {
+            const itemsFor = itemsForDay(d)
+            const dense = itemsFor.length > 3
+            const max = dense ? 6 : 4
+            return (
+              <div className={`${styles.monthEvents} ${dense ? styles.monthEventsDense : ''}`}>
+                {itemsFor.slice(0, max).map((a) => (
+                  <div key={a.id} className={`${styles.monthEvent} ${styles[`status_${a.status}`]} status_${a.status}`}
+                    onMouseEnter={(e) => { e.stopPropagation(); onOpen(a, e.currentTarget as HTMLElement) }}
+                    onMouseMove={(e) => { e.stopPropagation(); onOpen(a, e.currentTarget as HTMLElement) }}
+                    onMouseLeave={() => { if (onHoverLeave) onHoverLeave() }}
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); onClickOpen(a) }}
+                  >
+                    <span className={styles.monthEventDot} />
+                    <span className={styles.ellipsis}>{a.title}</span>
+                  </div>
+                ))}
+                {itemsFor.length > max && <div className={styles.more}>+{itemsFor.length - max} más</div>}
+              </div>
+            )
+          })()}
         </button>
       ))}
+    </div>
+  )
+}
+
+// Popover component with intelligent positioning
+function AppointmentPopover({ appointment, anchorRect, anchorOffset, onClose }: { appointment: Appointment | null; anchorRect: DOMRect | null; anchorOffset?: { dx: number; dy: number } | null; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+
+  useLayoutEffect(() => {
+    if (!appointment || !anchorRect) return
+    const el = ref.current
+    const margin = 8
+    const fallbackWidth = 260
+    const fallbackHeight = 140
+    const width = el?.offsetWidth ?? fallbackWidth
+    const height = el?.offsetHeight ?? fallbackHeight
+
+    // Base coordinates: if anchorOffset provided (day view click) use click point; else anchor top-right
+    let baseX: number
+    let baseY: number
+    if (anchorOffset) {
+      baseX = anchorRect.left + anchorOffset.dx
+      baseY = anchorRect.top + anchorOffset.dy
+    } else {
+      baseX = anchorRect.right
+      baseY = anchorRect.top
+    }
+
+    // Prefer placing to the right of click/anchor
+    let x = baseX + margin
+    // If overflow right, try left of anchor/point
+    if (x + width > window.innerWidth - margin) {
+      x = baseX - width - margin
+    }
+    if (x < margin) x = margin
+
+    // Vertical: center around click point if possible when using offset, else align top
+    let y: number
+    if (anchorOffset) {
+      y = baseY - height / 2
+    } else {
+      y = baseY
+    }
+    if (y + height > window.innerHeight - margin) {
+      y = window.innerHeight - height - margin
+    }
+    if (y < margin) y = margin
+    setPos({ x, y })
+  }, [appointment, anchorRect, anchorOffset])
+
+  if (!appointment || !anchorRect || !pos) return null
+  const s = new Date(appointment.start)
+  const e = new Date(appointment.end)
+  return (
+    <div className={styles.popoverBackdrop} onClick={onClose}>
+      <div
+        ref={ref}
+        className={styles.popover}
+        style={{ top: pos.y, left: pos.x }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={styles.popoverHeader}>
+          <span className={styles.popoverStatus + ' ' + styles[`status_${appointment.status}`]} />
+          <h3 className={styles.popoverTitle}>{appointment.title}</h3>
+        </div>
+        <div className={styles.popoverSection}>
+          <div className={styles.popoverLabel}>Horario</div>
+          <div className={styles.popoverValue}>{s.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {e.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+        </div>
+        <div className={styles.popoverSection}>
+          <div className={styles.popoverLabel}>Estado</div>
+          <div className={styles.popoverValue}>{STATUS_LABELS[appointment.status]}</div>
+        </div>
+        {appointment.notes && (
+          <div className={styles.popoverSection}>
+            <div className={styles.popoverLabel}>Notas</div>
+            <div className={styles.popoverNotes}>{appointment.notes}</div>
+          </div>
+        )}
+        <div className={styles.popoverActionsInfo}>Click fuera para cerrar</div>
+      </div>
     </div>
   )
 }

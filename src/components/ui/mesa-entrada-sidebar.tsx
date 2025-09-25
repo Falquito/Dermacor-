@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { 
   Users, 
   Calendar, 
@@ -11,9 +12,9 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Stethoscope,
   User,
-  Clock
+  Clock,
+  Home
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -24,10 +25,17 @@ interface SidebarProps {
 
 const sidebarItems = [
   { 
+    id: 'inicio', 
+    name: 'Inicio', 
+    icon: Home, 
+    href: '/mesa-entrada',
+    description: 'Panel principal' 
+  },
+  { 
     id: 'pacientes', 
     name: 'Pacientes', 
     icon: Users, 
-    href: '/mesa-entrada',
+    href: '/mesa-entrada/pacientes',
     description: 'Gestión de pacientes' 
   },
   { 
@@ -73,38 +81,58 @@ export default function MesaEntradaSidebar({
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          {!collapsed && (
+      <div className="p-2 border-b border-gray-200">
+        {!collapsed ? (
+          <div className="flex items-center justify-between p-2">
             <div className="flex items-center space-x-3">
               <div className="bg-emerald-100 p-2 rounded-lg">
-                <Stethoscope className="h-6 w-6 text-emerald-600" />
+                <Image
+                  src="/logo.png"
+                  alt="CareLink Logo"
+                  width={64}
+                  height={64}
+                  className="w-10 h-10 object-contain"
+                />
               </div>
               <div>
                 <h2 className="font-semibold text-gray-900">CareLink</h2>
                 <p className="text-xs text-emerald-600 font-medium">Mesa de Entrada</p>
               </div>
             </div>
-          )}
-          {collapsed && (
-            <div className="bg-emerald-100 p-2 rounded-lg mx-auto">
-              <Stethoscope className="h-6 w-6 text-emerald-600" />
-            </div>
-          )}
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-1 hover:bg-gray-100"
-          >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCollapsed(!collapsed)}
+              className="p-1 hover:bg-gray-100 flex-shrink-0"
+            >
               <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex justify-center">
+              <div className="bg-emerald-100 p-1 rounded-lg">
+                <Image
+                  src="/logo.png"
+                  alt="CareLink Logo"
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 object-contain"
+                />
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCollapsed(!collapsed)}
+                className="p-1 hover:bg-gray-100 w-8 h-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation Menu */}

@@ -28,7 +28,7 @@ async function registerAction(formData: FormData) {
 
 export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const user = await getCurrentUser()
-  if (user) redirect(roleToPath(user.role))
+  if (user && user.role !== null) redirect(roleToPath(user.role))
 
   const sp = await searchParams
   const exists = sp?.error === 'exists'

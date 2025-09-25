@@ -11,12 +11,21 @@ async function loginAction(formData: FormData) {
   if (!res.ok) {
     redirect('/login?error=1')
   }
+  // If role is null, redirect to home or a safe default
+  if (!res.user.role) {
+    redirect('/')
+  }
   redirect(roleToPath(res.user.role))
 }
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const user = await getCurrentUser()
-  if (user) redirect(roleToPath(user.role))
+  if (user) {
+    if (!user.role) {
+      redirect('/')
+    }
+    redirect(roleToPath(user.role))
+  }
 
   const sp = await searchParams
   const hasError = !!sp?.error

@@ -78,14 +78,16 @@ export default function MesaEntradaTopbar({ userName, userEmail }: TopbarProps) 
           {/* Notifications */}
           <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
             <Bell className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+              2
+            </span>
           </button>
 
           {/* User Info */}
           <div className="flex items-center space-x-3">
-            <div className="text-right">
+            <div className="hidden sm:block text-right">
               <p className="text-sm font-medium text-gray-900">
-                {userName || 'Usuario'}
+                {userName || 'Mesa de Entrada'}
               </p>
               <p className="text-xs text-gray-500">{userEmail}</p>
             </div>
@@ -101,7 +103,7 @@ export default function MesaEntradaTopbar({ userName, userEmail }: TopbarProps) 
               title="Cerrar sesión"
             >
               <LogOut className="w-4 h-4" />
-              <span>Salir</span>
+              <span className="hidden md:inline">Cerrar Sesión</span>
             </button>
           </div>
         </div>

@@ -64,7 +64,7 @@ export default function MesaEntradaSidebar({ userRole }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "bg-white border-r border-gray-200 flex flex-col transition-all duration-300",
+      "bg-white border-r border-gray-200 flex flex-col min-h-screen transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}

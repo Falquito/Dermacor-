@@ -76,6 +76,7 @@ const menuItems = [
 ]
 
 export default function ProfesionalSidebar({ 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   userRole, 
   collapsed = false, 
   onCollapsedChange 

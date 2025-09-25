@@ -60,7 +60,10 @@ const sidebarItems = [
   },
 ]
 
-export default function MesaEntradaSidebar({ userRole }: SidebarProps) {
+export default function MesaEntradaSidebar({ 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  userRole 
+}: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
 

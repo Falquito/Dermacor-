@@ -70,7 +70,12 @@ const sidebarItems = [
   },
 ]
 
-export default function GerenciaSidebar({ userRole, collapsed: externalCollapsed, onCollapsedChange }: SidebarProps) {
+export default function GerenciaSidebar({ 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  userRole, 
+  collapsed: externalCollapsed, 
+  onCollapsedChange 
+}: SidebarProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const pathname = usePathname()
   

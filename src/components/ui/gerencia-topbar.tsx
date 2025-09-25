@@ -8,6 +8,7 @@ import {
   LogOut,
   User
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface TopbarProps {
   userName: string | null
@@ -15,42 +16,45 @@ interface TopbarProps {
 }
 
 const pathTitles: Record<string, string> = {
-  '/mesa-entrada': 'Pacientes',
-  '/mesa-entrada/turnos': 'Turnos',
-  '/mesa-entrada/pagos': 'Pagos', 
-  '/mesa-entrada/reportes': 'Reportes',
-  '/mesa-entrada/configuracion': 'Configuración',
+  '/gerente': 'Dashboard',
+  '/gerente/usuarios': 'Usuarios',
+  '/gerente/reportes': 'Reportes', 
+  '/gerente/auditoria': 'Auditoría',
+  '/gerente/organizacion': 'Organización',
+  '/gerente/configuracion': 'Configuración',
 }
 
-export default function MesaEntradaTopbar({ userName, userEmail }: TopbarProps) {
+export default function GerenciaTopbar({ userName, userEmail }: TopbarProps) {
   const pathname = usePathname()
-  const currentTitle = pathTitles[pathname] || 'Mesa de Entrada'
+  const currentTitle = pathTitles[pathname] || 'Gerencia'
 
-  const handleLogout = () => {
-    console.log('🔥 LOGOUT INICIADO')
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     
-    // Hacer petición de logout
-    fetch('/api/auth/logout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    .then(response => {
-      console.log('📡 Respuesta logout:', response.status)
+    try {
+      console.log('Iniciando proceso de logout...')
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      console.log('Respuesta del logout:', response.status)
+      
       if (response.ok) {
-        console.log('✅ Logout exitoso - Redirigiendo...')
-        // Redirigir a login
+        console.log('Logout exitoso, redirigiendo a login...')
+        // Forzar redirección completa en lugar de usar router.push
         window.location.href = '/login'
       } else {
-        console.error('❌ Error logout:', response.status)
-        alert('Error al cerrar sesión')
+        console.error('Error al cerrar sesión:', response.status)
+        alert('Error al cerrar sesión. Por favor, intenta de nuevo.')
       }
-    })
-    .catch(error => {
-      console.error('💥 Error de red:', error)
-      alert('Error de conexión')
-    })
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+      alert('Error de conexión. Por favor, verifica tu conexión e intenta de nuevo.')
+    }
   }
 
   return (
@@ -58,14 +62,14 @@ export default function MesaEntradaTopbar({ userName, userEmail }: TopbarProps) 
       <div className="flex items-center justify-between">
         {/* Breadcrumbs */}
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-500">Mesa de Entrada</span>
+          <span className="text-sm text-gray-500">Gerencia</span>
           <ChevronRight className="w-4 h-4 text-gray-400" />
           <span className="text-sm font-medium text-gray-900">{currentTitle}</span>
         </div>
 
-        {/* Search and User Actions */}
+        {/* Search and Actions */}
         <div className="flex items-center space-x-4">
-          {/* Search Bar */}
+          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -76,12 +80,12 @@ export default function MesaEntradaTopbar({ userName, userEmail }: TopbarProps) 
           </div>
 
           {/* Notifications */}
-          <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
+          <Button variant="ghost" size="sm" className="relative">
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          </Button>
 
-          {/* User Info */}
+          {/* User Menu */}
           <div className="flex items-center space-x-3">
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">
@@ -95,14 +99,16 @@ export default function MesaEntradaTopbar({ userName, userEmail }: TopbarProps) 
             </div>
 
             {/* Logout Button */}
-            <button 
-              onClick={handleLogout}
-              className="flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors"
+            <Button 
+              type="button"
+              variant="ghost" 
+              size="sm" 
+              onClick={handleSignOut}
+              className="hover:bg-red-50 hover:text-red-600"
               title="Cerrar sesión"
             >
               <LogOut className="w-4 h-4" />
-              <span>Salir</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>

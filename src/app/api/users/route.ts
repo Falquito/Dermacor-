@@ -7,7 +7,7 @@ import { z, ZodIssue } from 'zod'
 const updateUserSchema = z.object({
   name: z.string().optional(),
   email: z.string().email('Email inválido').optional(),
-  role: z.enum(['PROFESIONAL', 'MESA_ENTRADA', 'GERENTE']).optional(),
+  role: z.enum(['PROFESIONAL', 'MESA_ENTRADA', 'GERENTE']).nullable().optional(),
 })
 
 // GET /api/users - Obtener lista de usuarios

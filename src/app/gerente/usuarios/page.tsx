@@ -91,7 +91,7 @@ export default function UsuariosPage() {
 
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
-
+    
     setUpdating(true);
     try {
       const response = await fetch('/api/users', {
@@ -103,9 +103,7 @@ export default function UsuariosPage() {
           id: selectedUser.id,
           role: editingRole === 'NONE' ? null : editingRole,
         }),
-      });
-
-      if (response.ok) {
+      });      if (response.ok) {
         const data = await response.json();
         setUsers(prev => prev.map(user => 
           user.id === selectedUser.id ? data.user : user

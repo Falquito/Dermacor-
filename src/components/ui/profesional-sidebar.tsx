@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { 
   Calendar, 
   Users, 
@@ -10,7 +11,6 @@ import {
   Settings, 
   ChevronLeft, 
   ChevronRight,
-  Stethoscope,
   Clock,
   UserCheck,
   Pill,
@@ -107,38 +107,58 @@ export default function ProfesionalSidebar({
       flex flex-col min-h-screen
     `}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
+      <div className="p-2 border-b border-gray-200">
+        {!isCollapsed ? (
+          <div className="flex items-center justify-between p-2">
             <div className="flex items-center space-x-3">
               <div className="bg-emerald-100 p-2 rounded-lg">
-                <Stethoscope className="h-6 w-6 text-emerald-600" />
+                <Image
+                  src="/logo.png"
+                  alt="CareLink Logo"
+                  width={64}
+                  height={64}
+                  className="w-10 h-10 object-contain"
+                />
               </div>
               <div>
                 <h2 className="font-semibold text-gray-900">CareLink</h2>
                 <p className="text-xs text-emerald-600 font-medium">Profesional</p>
               </div>
             </div>
-          )}
-          {isCollapsed && (
-            <div className="bg-emerald-100 p-2 rounded-lg mx-auto">
-              <Stethoscope className="h-6 w-6 text-emerald-600" />
-            </div>
-          )}
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleCollapse}
-            className="p-1 hover:bg-gray-100"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleCollapse}
+              className="p-1 hover:bg-gray-100 flex-shrink-0"
+            >
               <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex justify-center">
+              <div className="bg-emerald-100 p-1 rounded-lg">
+                <Image
+                  src="/logo.png"
+                  alt="CareLink Logo"
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 object-contain"
+                />
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleCollapse}
+                className="p-1 hover:bg-gray-100 w-8 h-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation Menu */}

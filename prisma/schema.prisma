@@ -87,6 +87,7 @@ model Patient {
   contactoEmergenciaRelacion  String?
   
   // Sistema
+  activo          Boolean     @default(true) // Estado del paciente (Activo/Inactivo)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   createdBy       String      // ID del usuario que creó el paciente

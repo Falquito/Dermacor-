@@ -15,6 +15,7 @@ export interface PatientFormData {
   contactoEmergenciaNombre: string
   contactoEmergenciaTelefono: string
   contactoEmergenciaRelacion: string
+  activo: boolean
 }
 
 // Tipo para envío al servidor (fechaNacimiento como string)
@@ -34,6 +35,7 @@ export interface PatientSubmitData {
   contactoEmergenciaNombre: string
   contactoEmergenciaTelefono: string
   contactoEmergenciaRelacion: string
+  activo: boolean
 }
 
 // Tipo para la respuesta de la API

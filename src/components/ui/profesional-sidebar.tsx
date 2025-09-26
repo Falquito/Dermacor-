@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { 
@@ -20,8 +20,6 @@ import { Button } from '@/components/ui/button'
 
 interface ProfesionalSidebarProps {
   userRole: string
-  collapsed?: boolean
-  onCollapsedChange?: (collapsed: boolean) => void
 }
 
 const menuItems = [
@@ -77,22 +75,14 @@ const menuItems = [
 
 export default function ProfesionalSidebar({ 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  userRole, 
-  collapsed = false, 
-  onCollapsedChange 
+  userRole
 }: ProfesionalSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [isCollapsed, setIsCollapsed] = useState(collapsed)
-
-  useEffect(() => {
-    setIsCollapsed(collapsed)
-  }, [collapsed])
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const toggleCollapse = () => {
-    const newCollapsed = !isCollapsed
-    setIsCollapsed(newCollapsed)
-    onCollapsedChange?.(newCollapsed)
+    setIsCollapsed(!isCollapsed)
   }
 
   const handleNavigation = (href: string) => {

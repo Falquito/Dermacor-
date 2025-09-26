@@ -22,11 +22,16 @@ const pathTitles: Record<string, string> = {
   '/gerente/auditoria': 'Auditoría',
   '/gerente/organizacion': 'Organización',
   '/gerente/configuracion': 'Configuración',
+  '/gerente/perfil': 'Mi Perfil',
 }
 
 export default function GerenciaTopbar({ userName, userEmail }: TopbarProps) {
   const pathname = usePathname()
   const currentTitle = pathTitles[pathname] || 'Gerencia'
+
+  const handlePerfilClick = () => {
+    window.location.href = '/gerente/perfil'
+  }
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -109,7 +114,10 @@ export default function GerenciaTopbar({ userName, userEmail }: TopbarProps) {
               
               {/* Dropdown menu */}
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                <button 
+                  onClick={handlePerfilClick}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                >
                   <User className="h-4 w-4" />
                   <span>Mi Perfil</span>
                 </button>

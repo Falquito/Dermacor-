@@ -20,11 +20,19 @@ model User {
   id           String    @id @default(cuid())
   email        String    @unique
   name         String?
+  apellido     String?
+  dni          String?   @unique
+  telefono     String?
   passwordHash String
   role         Role? // Optional, assigned after creation
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   sessions     Session[]
+
+  // Información específica para profesionales
+  especialidadId          String?
+  especialidad            Especialidad? @relation("UserEspecialidad", fields: [especialidadId], references: [id])
+  profesionalSchedules    ProfessionalSchedule[]
 
   // Relaciones con pacientes y turnos
   createdPatients          Patient[]     @relation("PatientCreator")
@@ -185,6 +193,9 @@ model Especialidad {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Relación con usuarios profesionales
+  professionals User[] @relation("UserEspecialidad")
+
   // Auditoría
   createdById     String?
   updatedById     String?
@@ -196,4 +207,31 @@ model Especialidad {
   deactivatedBy User? @relation("EspecialidadDeactivatedBy", fields: [deactivatedById], references: [id])
 
   @@map("especialidades")
+}
+
+// Días de la semana para horarios
+enum DayOfWeek {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+  DOMINGO
+}
+
+// Horarios de disponibilidad de profesionales
+model ProfessionalSchedule {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayOfWeek DayOfWeek
+  startTime String    // Formato HH:mm (ej: "09:00")
+  endTime   String    // Formato HH:mm (ej: "17:00")
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, dayOfWeek])
+  @@map("professional_schedules")
 }

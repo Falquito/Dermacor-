@@ -21,11 +21,16 @@ const pathTitles: Record<string, string> = {
   '/mesa-entrada/pagos': 'Pagos', 
   '/mesa-entrada/reportes': 'Reportes',
   '/mesa-entrada/configuracion': 'Configuración',
+  '/mesa-entrada/perfil': 'Mi Perfil',
 }
 
 export default function MesaEntradaTopbar({ userName, userEmail }: TopbarProps) {
   const pathname = usePathname()
   const currentTitle = pathTitles[pathname] || 'Mesa de Entrada'
+
+  const handlePerfilClick = () => {
+    window.location.href = '/mesa-entrada/perfil'
+  }
 
   const handleLogout = () => {
     console.log('🔥 LOGOUT INICIADO')
@@ -102,7 +107,10 @@ export default function MesaEntradaTopbar({ userName, userEmail }: TopbarProps) 
               
               {/* Dropdown menu */}
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                <button 
+                  onClick={handlePerfilClick}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                >
                   <User className="h-4 w-4" />
                   <span>Mi Perfil</span>
                 </button>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, User, Calendar, Phone } from 'lucide-react'
+import { Search, Plus, User, Calendar, Phone, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -25,6 +25,7 @@ export function PacienteSelector({
   const [pacientes, setPacientes] = useState<PacienteBusqueda[]>([])
   const [buscando, setBuscando] = useState(false)
   const [mostrarDialogo, setMostrarDialogo] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const buscarPacientes = async () => {
@@ -54,11 +55,54 @@ export function PacienteSelector({
 
   const handlePacienteCreado = async (pacienteData: PatientSubmitData) => {
     try {
-      // Simular respuesta exitosa del servidor
-      onPacienteNuevo(pacienteData)
-      setMostrarDialogo(false)
+      // Limpiar error anterior
+      setError(null)
+      
+      // Realizar la llamada a la API para crear el paciente
+      const response = await fetch('/api/patients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pacienteData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al crear el paciente')
+      }
+
+      const result = await response.json()
+      
+      if (result.success && result.patient) {
+        // Convertir el paciente creado al formato esperado para búsqueda
+        const pacienteCreado: PacienteBusqueda = {
+          id: result.patient.id,
+          nombre: result.patient.nombre,
+          apellido: result.patient.apellido,
+          dni: result.patient.dni,
+          fechaNacimiento: new Date(result.patient.fechaNacimiento),
+          telefono: result.patient.telefono,
+          celular: result.patient.celular
+        }
+
+        // Seleccionar automáticamente el paciente recién creado
+        onPacienteSeleccionado(pacienteCreado)
+        
+        // Limpiar la búsqueda para que no interfiera
+        setBusqueda('')
+        
+        // Cerrar el diálogo
+        setMostrarDialogo(false)
+        
+        // También llamar el callback original si existe
+        onPacienteNuevo(pacienteData)
+      } else {
+        throw new Error('Error al crear el paciente')
+      }
     } catch (error) {
       console.error('Error al crear paciente:', error)
+      setError(error instanceof Error ? error.message : 'Error desconocido al crear el paciente')
     }
   }
 
@@ -86,7 +130,12 @@ export function PacienteSelector({
           />
         </div>
         
-        <Dialog open={mostrarDialogo} onOpenChange={setMostrarDialogo}>
+        <Dialog open={mostrarDialogo} onOpenChange={(open) => {
+          setMostrarDialogo(open)
+          if (open) {
+            setError(null) // Limpiar error al abrir el diálogo
+          }
+        }}>
           <DialogTrigger asChild>
             <Button variant="outline" className="shrink-0 whitespace-nowrap">
               <Plus className="h-4 w-4 sm:mr-2" />
@@ -101,6 +150,19 @@ export function PacienteSelector({
                 Complete los datos del paciente para registrarlo y asignar el turno
               </DialogDescription>
             </DialogHeader>
+            
+            {/* Mostrar error si existe */}
+            {error && (
+              <Card className="border-red-200 bg-red-50">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 text-red-700">
+                    <AlertCircle className="h-4 w-4" />
+                    <p className="text-sm font-medium">{error}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <FormularioAltaPaciente
               onSubmit={handlePacienteCreado}
               onCancel={() => setMostrarDialogo(false)}
@@ -210,7 +272,12 @@ export function PacienteSelector({
                 <p className="text-sm text-gray-600 mb-4">
                   No hay pacientes registrados que coincidan con &quot;{busqueda}&quot;
                 </p>
-                <Dialog open={mostrarDialogo} onOpenChange={setMostrarDialogo}>
+                <Dialog open={mostrarDialogo} onOpenChange={(open) => {
+                  setMostrarDialogo(open)
+                  if (open) {
+                    setError(null) // Limpiar error al abrir el diálogo
+                  }
+                }}>
                   <DialogTrigger asChild>
                     <Button variant="outline">
                       <Plus className="h-4 w-4 mr-2" />

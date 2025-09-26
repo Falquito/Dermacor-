@@ -67,12 +67,8 @@ export default function Home() {
             <div className="text-center">
               <div className="mb-4">
                 <svg className="w-12 h-12 mx-auto group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M11.5 2V22H12.5V2H11.5Z"/>
-                  <path d="M12 22L12 2M9 4.5C7.3 4.5 6 5.8 6 7.5C6 9.2 7.3 10.5 9 10.5C10.7 10.5 12 9.2 12 7.5M15 13.5C16.7 13.5 18 12.2 18 10.5C18 8.8 16.7 7.5 15 7.5C13.3 7.5 12 8.8 12 10.5"/>
-                  <path d="M9 10.5C9.8 11.3 10.8 12 12 12.5C13.2 13 14.2 13.7 15 14.5" stroke="currentColor" strokeWidth="0.5" fill="none"/>
-                  <path d="M15 7.5C14.2 8.3 13.2 9 12 9.5C10.8 10 9.8 10.7 9 11.5" stroke="currentColor" strokeWidth="0.5" fill="none"/>
-                  <circle cx="9" cy="7.5" r="1.5"/>
-                  <circle cx="15" cy="10.5" r="1.5"/>
+                  <rect x="10" y="4" width="4" height="16" rx="1" />
+                  <rect x="4" y="10" width="16" height="4" rx="1" />
                 </svg>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold mb-2 group-hover:text-blue-900 transition-colors">

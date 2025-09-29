@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { AppointmentStatus } from '@prisma/client'
+
+export async function GET(request: NextRequest) {
+  try {
+    const currentUser = await getCurrentUser()
+    
+    if (!currentUser || !currentUser.roles.includes('PROFESIONAL')) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para acceder a esta información' },
+        { status: 403 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const dateFrom = searchParams.get('dateFrom')
+    const dateTo = searchParams.get('dateTo')
+
+    // Default to last 30 days if no dates provided
+    const defaultFrom = new Date()
+    defaultFrom.setDate(defaultFrom.getDate() - 30)
+    const defaultTo = new Date()
+
+    const fromDate = dateFrom ? new Date(dateFrom) : defaultFrom
+    const toDate = dateTo ? new Date(dateTo) : defaultTo
+
+    // Get appointments for the professional in the date range
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        profesionalId: currentUser.id,
+        fecha: {
+          gte: fromDate,
+          lte: toDate
+        }
+      },
+      include: {
+        obraSocial: {
+          select: {
+            id: true,
+            nombre: true
+          }
+        },
+        paciente: {
+          select: {
+            nombre: true,
+            apellido: true
+          }
+        }
+      }
+    })
+
+    // Calculate statistics
+    const totalAppointments = appointments.length
+    
+    // Count by status
+    const statusCounts = appointments.reduce((acc, appointment) => {
+      acc[appointment.estado] = (acc[appointment.estado] || 0) + 1
+      return acc
+    }, {} as Record<AppointmentStatus, number>)
+
+    // Count by obra social
+    const obraSocialCounts = appointments.reduce((acc, appointment) => {
+      const obraSocialName = appointment.obraSocial?.nombre || 'Particular'
+      acc[obraSocialName] = (acc[obraSocialName] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    // Calculate percentages for obra social
+    const obraSocialPercentages = Object.entries(obraSocialCounts).map(([name, count]) => ({
+      name,
+      count,
+      percentage: totalAppointments > 0 ? Math.round((count / totalAppointments) * 100) : 0
+    }))
+
+    // Calculate completion rate
+    const completedAppointments = statusCounts[AppointmentStatus.COMPLETADO] || 0
+    const cancelledAppointments = (statusCounts[AppointmentStatus.CANCELADO] || 0) + 
+                                  (statusCounts[AppointmentStatus.NO_ASISTIO] || 0)
+    const completionRate = totalAppointments > 0 ? 
+      Math.round((completedAppointments / totalAppointments) * 100) : 0
+    const cancellationRate = totalAppointments > 0 ? 
+      Math.round((cancelledAppointments / totalAppointments) * 100) : 0
+
+    // Recent appointments (last 5)
+    const recentAppointments = appointments
+      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+      .slice(0, 5)
+      .map(appointment => ({
+        id: appointment.id,
+        fecha: appointment.fecha,
+        paciente: `${appointment.paciente.apellido}, ${appointment.paciente.nombre}`,
+        estado: appointment.estado,
+        motivo: appointment.motivo,
+        obraSocial: appointment.obraSocial?.nombre || 'Particular'
+      }))
+
+    const stats = {
+      dateRange: {
+        from: fromDate,
+        to: toDate
+      },
+      totalAppointments,
+      statusCounts,
+      obraSocialPercentages,
+      completionRate,
+      cancellationRate,
+      recentAppointments,
+      // Additional metrics
+      averageDaily: totalAppointments > 0 ? 
+        Math.round(totalAppointments / Math.max(1, Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)))) : 0
+    }
+
+    return NextResponse.json(stats)
+
+  } catch (error) {
+    console.error('Error fetching professional stats:', error)
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    )
+  }
+}

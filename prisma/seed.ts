@@ -238,8 +238,6 @@ async function main() {
 
   // Obtener obras sociales creadas
   const obrasSocialesCreadas = await prisma.obraSocial.findMany()
-  const osdeObraSocial = obrasSocialesCreadas.find(os => os.nombre === 'OSDE')
-  const swissObraSocial = obrasSocialesCreadas.find(os => os.nombre === 'Swiss Medical')
   const particularObraSocial = obrasSocialesCreadas.find(os => os.nombre === 'Particular')
 
   // Crear turnos distribuidos: 7 días hacia atrás y 14 días hacia adelante
@@ -299,9 +297,8 @@ async function main() {
             
             const tipoConsultaRandom = Math.random()
             if (tipoConsultaRandom < 0.8) {
-              // 80% obra social
-              const obrasSocialesArray = [osdeObraSocial, swissObraSocial, obrasSocialesCreadas[2], obrasSocialesCreadas[3]]
-              const obraSocialSeleccionada = obrasSocialesArray[Math.floor(Math.random() * obrasSocialesArray.length)]
+              // 80% obra social - Usar todas las obras sociales disponibles
+              const obraSocialSeleccionada = obrasSocialesCreadas[Math.floor(Math.random() * obrasSocialesCreadas.length)]
               obraSocialId = obraSocialSeleccionada?.id
               numeroAfiliado = Math.floor(Math.random() * 9000000) + 1000000 + '' // Número de 7 dígitos
               copago = Math.random() < 0.3 ? Math.floor(Math.random() * 5000) + 1000 : null // 30% tienen copago

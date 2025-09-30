@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import ProfesionalSidebar from "@/components/ui/profesional-sidebar";
-import ProfesionalTopbar from "@/components/ui/profesional-topbar";
 import ObservacionesEditor from "@/components/ObservacionesEditor";
 
 export default function ConsultaDesdeAgendaPage() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const search = useSearchParams();
   const appointmentId = search.get("id") ?? "";
@@ -43,19 +40,8 @@ export default function ConsultaDesdeAgendaPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <ProfesionalSidebar
-        userRole="PROFESIONAL"
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
-      />
 
       <div className="flex-1 flex flex-col">
-        <ProfesionalTopbar
-          userName="Dr. Profesional"
-          userEmail="doctor@carelink.com"
-          sidebarCollapsed={sidebarCollapsed}
-          setSidebarCollapsed={setSidebarCollapsed}
-        />
 
         <main className="flex-1 p-4 md:p-6">
           <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6 md:p-8 border-l-4 border-l-emerald-500">

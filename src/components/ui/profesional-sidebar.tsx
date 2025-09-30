@@ -7,13 +7,11 @@ import {
   Calendar, 
   Users, 
   FileText, 
-  Activity, 
   Settings, 
   ChevronLeft, 
   ChevronRight,
   Clock,
   UserCheck,
-  Pill,
   ClipboardList,
   Home
 } from 'lucide-react'
@@ -53,18 +51,6 @@ const menuItems = [
     icon: FileText,
     href: '/profesional/historias-clinicas',
     description: 'Historiales médicos'
-  },
-  {
-    title: 'Prescripciones',
-    icon: Pill,
-    href: '/profesional/prescripciones',
-    description: 'Recetas médicas'
-  },
-  {
-    title: 'Estudios',
-    icon: Activity,
-    href: '/profesional/estudios',
-    description: 'Órdenes de estudios'
   },
   {
     title: 'Reportes',

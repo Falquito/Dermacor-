@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { 
   Calendar, 
@@ -13,16 +12,12 @@ import {
   Stethoscope,
   Clock,
   UserCheck,
-  Pill,
-  ClipboardList,
-  Home
+  ClipboardList
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface ProfesionalSidebarProps {
   userRole: string
-  collapsed?: boolean
-  onCollapsedChange?: (collapsed: boolean) => void
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
 }
@@ -71,17 +66,9 @@ export default function ProfesionalSidebar({
   userRole, 
   collapsed = false, 
   onCollapsedChange 
-  userRole, 
-  collapsed = false, 
-  onCollapsedChange 
 }: ProfesionalSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [isCollapsed, setIsCollapsed] = useState(collapsed)
-
-  useEffect(() => {
-    setIsCollapsed(collapsed)
-  }, [collapsed])
   const [isCollapsed, setIsCollapsed] = useState(collapsed)
 
   useEffect(() => {
@@ -92,13 +79,10 @@ export default function ProfesionalSidebar({
     const newCollapsed = !isCollapsed
     setIsCollapsed(newCollapsed)
     onCollapsedChange?.(newCollapsed)
-    const newCollapsed = !isCollapsed
-    setIsCollapsed(newCollapsed)
-    onCollapsedChange?.(newCollapsed)
   }
 
   const handleNavigation = (href: string) => {
-    router.push(href)
+    if (pathname !== href) router.push(href)
   }
 
   return (
@@ -111,13 +95,13 @@ export default function ProfesionalSidebar({
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          {!isCollapsed && (
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
+          {isCollapsed ? (
+            <div className="bg-emerald-100 p-2 rounded-lg mx-auto">
+              <Stethoscope className="h-6 w-6 text-emerald-600" />
+            </div>
+          ) : (
             <div className="flex items-center space-x-3">
               <div className="bg-emerald-100 p-2 rounded-lg">
-                <Stethoscope className="h-6 w-6 text-emerald-600" />
                 <Stethoscope className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
@@ -126,36 +110,12 @@ export default function ProfesionalSidebar({
               </div>
             </div>
           )}
-          {isCollapsed && (
-            <div className="bg-emerald-100 p-2 rounded-lg mx-auto">
-              <Stethoscope className="h-6 w-6 text-emerald-600" />
-          )}
-          {isCollapsed && (
-            <div className="bg-emerald-100 p-2 rounded-lg mx-auto">
-              <Stethoscope className="h-6 w-6 text-emerald-600" />
-            </div>
-          )}
-          
           <Button
             variant="ghost"
             size="sm"
             onClick={toggleCollapse}
             className="p-1 hover:bg-gray-100"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-          )}
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleCollapse}
-            className="p-1 hover:bg-gray-100"
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed ? (
               <ChevronRight className="h-4 w-4" />

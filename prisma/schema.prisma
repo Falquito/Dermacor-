@@ -39,6 +39,11 @@ model User {
   professionalAppointments Appointment[] @relation("ProfesionalAppointments")
   createdAppointments      Appointment[] @relation("CreatorAppointments")
 
+  diagnoses           Diagnosis[]        @relation("DiagnosisProfessional")
+  prescriptions       Prescription[]     @relation("PrescriptionProfessional")
+  studyOrders         StudyOrder[]       @relation("StudyOrderProfessional")
+  recordedMedications PatientMedication[] @relation("MedicationProfessional")
+
   // --- Auditoría de Especialidad (agregado) ---
   especialidadesCreadas      Especialidad[]            @relation("EspecialidadCreatedBy")
   especialidadesActualizadas Especialidad[]            @relation("EspecialidadUpdatedBy")
@@ -122,6 +127,10 @@ model Patient {
   // Turnos
   appointments            Appointment[]
   AppointmentCancellation AppointmentCancellation[]
+  diagnoses               Diagnosis[]
+  prescriptions           Prescription[]
+  studyOrders             StudyOrder[]
+  medications             PatientMedication[]
 
   @@map("patients")
 }
@@ -172,6 +181,9 @@ model Appointment {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   AppointmentCancellation AppointmentCancellation?
+  diagnoses               Diagnosis[]
+  prescriptions           Prescription[]
+  studyOrders             StudyOrder[]
 
   @@map("appointments")
 }
@@ -247,4 +259,112 @@ model ProfessionalSchedule {
 
   @@unique([userId, dayOfWeek])
   @@map("professional_schedules")
+}
+
+model Diagnosis {
+  id             String       @id @default(cuid())
+  appointmentId  String
+  appointment    Appointment  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patientId      String
+  patient        Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   User         @relation("DiagnosisProfessional", fields: [professionalId], references: [id])
+  principal      String
+  secundarios    String[]     @default([])
+  notas          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  prescriptions PrescriptionDiagnosis[]
+
+  @@map("diagnoses")
+}
+
+model Prescription {
+  id             String       @id @default(cuid())
+  appointmentId  String
+  appointment    Appointment  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patientId      String
+  patient        Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   User         @relation("PrescriptionProfessional", fields: [professionalId], references: [id])
+  notas          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  items       PrescriptionItem[]
+  diagnoses   PrescriptionDiagnosis[]
+
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id              String        @id @default(cuid())
+  prescriptionId  String
+  prescription    Prescription  @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medicamento     String
+  dosis           String
+  frecuencia      String
+  duracion        String
+  indicaciones    String?
+
+  @@map("prescription_items")
+}
+
+model PrescriptionDiagnosis {
+  id             String        @id @default(cuid())
+  prescriptionId String
+  diagnosisId    String
+  prescription   Prescription  @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  diagnosis      Diagnosis     @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+
+  @@unique([prescriptionId, diagnosisId])
+  @@map("prescription_diagnoses")
+}
+
+model StudyOrder {
+  id             String       @id @default(cuid())
+  appointmentId  String
+  appointment    Appointment  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patientId      String
+  patient        Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   User         @relation("StudyOrderProfessional", fields: [professionalId], references: [id])
+  notas          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  items StudyOrderItem[]
+
+  @@map("study_orders")
+}
+
+model StudyOrderItem {
+  id         String     @id @default(cuid())
+  orderId    String
+  order      StudyOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  estudio    String
+  indicaciones String?
+
+  @@map("study_order_items")
+}
+
+model PatientMedication {
+  id             String   @id @default(cuid())
+  patientId      String
+  patient        Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   User     @relation("MedicationProfessional", fields: [professionalId], references: [id])
+  nombre         String
+  dosis          String?
+  frecuencia     String?
+  viaAdministracion String?
+  fechaInicio    DateTime?
+  fechaFin       DateTime?
+  indicaciones   String?
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("patient_medications")
 }

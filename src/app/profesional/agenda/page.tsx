@@ -30,6 +30,8 @@ const STATUS_LABELS: Record<AppointmentStatus, string> = {
   NO_ASISTIO: 'No asistió',
 }
 
+const LOCALE = 'es-ES' as const
+
 function startOfDay(d: Date) {
   const x = new Date(d)
   x.setHours(0, 0, 0, 0)
@@ -155,7 +157,7 @@ export default function AgendaPage() {
   }, [date])
 
   const periodLabel = useMemo(() => {
-    const locale = undefined
+    const locale = LOCALE
     if (view === 'day') {
       return date.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })
     }
@@ -168,7 +170,7 @@ export default function AgendaPage() {
       }
       return `${s.getDate()} ${s.toLocaleDateString(locale, { month: 'short' })} – ${e.getDate()} ${e.toLocaleDateString(locale, { month: 'short', year: 'numeric' })}`
     }
-    return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
   }, [view, date])
 
   function goPrev() {
@@ -370,13 +372,13 @@ function DayView({ date, items, onOpen, onHoverLeave, onClickOpen }: { date: Dat
   return (
     <div
       className={styles.dayContainer}
-      aria-label={`Agenda del ${date.toLocaleDateString()}`}
+      aria-label={`Agenda del ${date.toLocaleDateString(LOCALE)}`}
       style={{ ['--hour-height']: `${hourHeight}px`, ['--hours-count']: hours.length } as React.CSSProperties}
     >
       <div className={styles.dayHeader}>
         <div className={styles.timeCol} />
         <div className={styles.headerCell}>
-          <div className={styles.headerDayName}>{date.toLocaleDateString(undefined, { weekday: 'long' })}</div>
+          <div className={styles.headerDayName}>{date.toLocaleDateString(LOCALE, { weekday: 'long' })}</div>
           <div className={styles.headerDayNum}>{date.getDate()}</div>
         </div>
       </div>
@@ -448,7 +450,7 @@ function WeekView({ days, items, onOpen, onHoverLeave, onClickOpen }: { days: Da
         <div className={styles.cornerCell} />
         {days.map((d) => (
           <div key={d.toISOString()} className={styles.headerCell}>
-            <div className={styles.headerDayName}>{d.toLocaleDateString(undefined, { weekday: 'short' })}</div>
+            <div className={styles.headerDayName}>{d.toLocaleDateString(LOCALE, { weekday: 'short' })}</div>
             <div className={styles.headerDayNum}>{d.getDate()}</div>
           </div>
         ))}
@@ -676,8 +678,8 @@ function AppointmentPopover({
         <div className={styles.popoverSection}>
           <div className={styles.popoverLabel}>Horario</div>
           <div className={styles.popoverValue}>
-            {s.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} –{" "}
-            {e.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            {s.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })} –{" "}
+            {e.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })}
           </div>
         </div>
 

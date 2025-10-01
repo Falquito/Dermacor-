@@ -1,4 +1,4 @@
-import { PrismaClient, Role, AppointmentStatus, DayOfWeek, TipoConsulta } from '@prisma/client'
+import { PrismaClient, Role, AppointmentStatus, DayOfWeek, TipoConsulta, ProfessionalSchedule } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -184,6 +184,22 @@ async function main() {
     }
   }
 
+  const horariosProfesionalesActivos = await prisma.professionalSchedule.findMany({
+    where: {
+      userId: {
+        in: profesionalesCreados.map(prof => prof.id)
+      },
+      isActive: true
+    }
+  })
+
+  const horariosPorProfesional = horariosProfesionalesActivos.reduce<Record<string, Partial<Record<DayOfWeek, ProfessionalSchedule>>>>((acc, horario) => {
+    const horarios = acc[horario.userId] ?? {}
+    horarios[horario.dayOfWeek] = horario
+    acc[horario.userId] = horarios
+    return acc
+  }, {})
+
   // Obtener usuario mesa de entrada
   const mesa = await prisma.user.findFirst({
     where: {
@@ -268,6 +284,62 @@ async function main() {
     return new Date(date.getTime() + days * 24 * 60 * 60 * 1000)
   }
 
+  const dayOfWeekMap: DayOfWeek[] = [
+    DayOfWeek.DOMINGO,
+    DayOfWeek.LUNES,
+    DayOfWeek.MARTES,
+    DayOfWeek.MIERCOLES,
+    DayOfWeek.JUEVES,
+    DayOfWeek.VIERNES,
+    DayOfWeek.SABADO
+  ]
+
+  const duracionesPosibles = [30, 45, 60]
+  const duracionMinima = Math.min(...duracionesPosibles)
+  const intervaloMinutos = 15
+
+  function getDayOfWeekEnum(date: Date): DayOfWeek {
+    return dayOfWeekMap[date.getDay()]
+  }
+
+  function timeStringToMinutes(time: string) {
+    const [hours, minutes] = time.split(':').map(Number)
+    return hours * 60 + minutes
+  }
+
+  function haySolapamiento(intervalos: Array<{ start: number; end: number }>, inicio: number, fin: number) {
+    return intervalos.some(intervalo => Math.max(intervalo.start, inicio) < Math.min(intervalo.end, fin))
+  }
+
+  function shuffle<T>(items: T[]) {
+    const clone = [...items]
+    for (let i = clone.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[clone[i], clone[j]] = [clone[j], clone[i]]
+    }
+    return clone
+  }
+
+  function seleccionarIntervaloDisponible(
+    inicio: number,
+    finDia: number,
+    intervalosOcupados: Array<{ start: number; end: number }>
+  ): { duracion: number; fin: number } | null {
+    const duracionesDisponibles = duracionesPosibles.filter(duracion => inicio + duracion <= finDia)
+    if (!duracionesDisponibles.length) {
+      return null
+    }
+
+    for (const duracion of shuffle(duracionesDisponibles)) {
+      const fin = inicio + duracion
+      if (!haySolapamiento(intervalosOcupados, inicio, fin)) {
+        return { duracion, fin }
+      }
+    }
+
+    return null
+  }
+
   const particularObraSocial = obrasSocialesCreadas.find(os => os.nombre === 'Particular')
 
   const pastDays = 30
@@ -289,8 +361,41 @@ async function main() {
     'Revisión de estudios', 'Control diabetes', 'Consulta dermatológica',
     'Control cardiológico', 'Consulta por mareos', 'Control ginecológico',
     'Seguimiento neurológico', 'Control oftalmológico', 'Consulta traumatológica',
-    'Control pediátrico', 'Consulta por ansiedad', 'Control endocrinológico'
+    'Control pediátrico', 'Consulta por ansiedad', 'Control endocrinológico',
+    'Consulta por alergias', 'Control pre quirúrgico', 'Revisión de medicación crónica',
+    'Consulta por insomnio', 'Evaluación nutricional', 'Consulta por dolor lumbar',
+    'Seguimiento de embarazo', 'Control de estudios de laboratorio', 'Consulta de segunda opinión',
+    'Control de tratamiento psiquiátrico', 'Consulta por fatiga crónica'
   ]
+
+  const observacionesPorEstado: Partial<Record<AppointmentStatus, string[]>> = {
+    [AppointmentStatus.PROGRAMADO]: [
+      'Recordar ayuno de 8 horas',
+      'Paciente solicita recordatorio por WhatsApp',
+      'Traer estudios previos impresos',
+      'Mesa de entrada coordina entrega de resultados'
+    ],
+    [AppointmentStatus.CONFIRMADO]: [
+      'Paciente confirmó asistencia vía telefónica',
+      'Se verificó cobertura de obra social',
+      'Paciente llegará 10 minutos antes',
+      'Confirmado por correo electrónico'
+    ],
+    [AppointmentStatus.COMPLETADO]: [
+      'Consulta finalizada exitosamente',
+      'Se indicó seguimiento en 30 días',
+      'Paciente derivado para estudios complementarios'
+    ],
+    [AppointmentStatus.CANCELADO]: [
+      'Turno cancelado por el paciente',
+      'Turno cancelado por reprogramación del profesional',
+      'Cancelación por inconvenientes de transporte'
+    ],
+    [AppointmentStatus.NO_ASISTIO]: [
+      'Paciente no se presentó',
+      'Paciente avisó luego del horario de la consulta'
+    ]
+  }
 
   const creadorTurnos = mesa?.id ?? usuariosCreados[0]?.id ?? ''
   const turnosData = []
@@ -303,21 +408,54 @@ async function main() {
       continue
     }
 
-    for (const profesional of profesionalesCreados) {
-      // Crear entre 6-10 turnos por profesional por día
-      const turnosPorDia = 6 + Math.floor(Math.random() * 5)
+    const dayOfWeek = getDayOfWeekEnum(fechaBase)
 
-      for (let turno = 0; turno < turnosPorDia; turno++) {
-        // Horario de inicio aleatorio entre 8:00 y 16:30
-        const horaInicio = 8 + Math.floor(Math.random() * 9) // 8 a 16
-        const minutoInicio = Math.random() < 0.5 ? 0 : 30 // :00 o :30
+    for (const profesional of profesionalesCreados) {
+      const horariosProfesional = horariosPorProfesional[profesional.id]
+      const horarioDelDia = horariosProfesional?.[dayOfWeek]
+
+      if (!horarioDelDia) {
+        continue
+      }
+
+      const inicioJornada = timeStringToMinutes(horarioDelDia.startTime)
+      const finJornada = timeStringToMinutes(horarioDelDia.endTime)
+
+      if (finJornada - inicioJornada < duracionMinima) {
+        continue
+      }
+
+      const posiblesInicios: number[] = []
+      for (let minuto = inicioJornada; minuto <= finJornada - duracionMinima; minuto += intervaloMinutos) {
+        posiblesInicios.push(minuto)
+      }
+
+      if (!posiblesInicios.length) {
+        continue
+      }
+
+      const turnosPorDia = Math.min(5 + Math.floor(Math.random() * 6), posiblesInicios.length)
+      const intervalosOcupados: Array<{ start: number; end: number }> = []
+      const candidatos = shuffle(posiblesInicios)
+
+      let turnosAsignados = 0
+
+      for (const inicioMinuto of candidatos) {
+        if (turnosAsignados >= turnosPorDia) {
+          break
+        }
+
+        const intervaloDisponible = seleccionarIntervaloDisponible(inicioMinuto, finJornada, intervalosOcupados)
+        if (!intervaloDisponible) {
+          continue
+        }
 
         const fechaTurno = new Date(
           fechaBase.getFullYear(),
           fechaBase.getMonth(),
           fechaBase.getDate(),
-          horaInicio,
-          minutoInicio
+          Math.floor(inicioMinuto / 60),
+          inicioMinuto % 60
         )
 
         const pacienteAleatorio = pacientesCreados[Math.floor(Math.random() * pacientesCreados.length)]
@@ -358,17 +496,14 @@ async function main() {
         }
 
         const motivoAleatorio = motivos[Math.floor(Math.random() * motivos.length)]
-        const observaciones = estado === AppointmentStatus.CANCELADO
-          ? 'Turno cancelado por el paciente'
-          : estado === AppointmentStatus.NO_ASISTIO
-            ? 'Paciente no se presentó'
-            : estado === AppointmentStatus.COMPLETADO
-              ? 'Consulta finalizada exitosamente'
-              : null
+        const observacionesLista = observacionesPorEstado[estado]
+        const observaciones = observacionesLista
+          ? observacionesLista[Math.floor(Math.random() * observacionesLista.length)]
+          : null
 
         turnosData.push({
           fecha: fechaTurno,
-          duracion: 30,
+          duracion: intervaloDisponible.duracion,
           motivo: motivoAleatorio,
           observaciones,
           estado,
@@ -380,6 +515,9 @@ async function main() {
           profesionalId: profesional.id,
           createdBy: creadorTurnos
         })
+
+        intervalosOcupados.push({ start: inicioMinuto, end: intervaloDisponible.fin })
+        turnosAsignados += 1
       }
     }
   }

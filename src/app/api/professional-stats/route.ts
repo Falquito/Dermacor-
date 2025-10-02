@@ -15,18 +15,32 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const dateFrom = searchParams.get('dateFrom')
-    const dateTo = searchParams.get('dateTo')
+  const dateFrom = searchParams.get('dateFrom')
+  const dateTo = searchParams.get('dateTo')
+  const allTime = searchParams.get('allTime') === '1'
 
     // Default to last 30 days if no dates provided
     const defaultFrom = new Date()
     defaultFrom.setDate(defaultFrom.getDate() - 30)
     const defaultTo = new Date()
 
-    const fromDate = dateFrom ? new Date(dateFrom) : defaultFrom
-    const toDate = dateTo ? new Date(dateTo) : defaultTo
+    let fromDate = dateFrom ? new Date(dateFrom) : defaultFrom
+    let toDate = dateTo ? new Date(dateTo) : defaultTo
 
-    // Get appointments for the professional in the date range
+    // If allTime flag: determine min/max fechas for this profesional
+    if (allTime) {
+      const extremes = await prisma.appointment.findMany({
+        where: { profesionalId: currentUser.id },
+        select: { fecha: true },
+        orderBy: { fecha: 'asc' }
+      })
+      if (extremes.length > 0) {
+        fromDate = extremes[0].fecha
+        toDate = extremes[extremes.length - 1].fecha
+      }
+    }
+
+    // Get appointments for the professional in the selected date range (for aggregated stats)
     const appointments = await prisma.appointment.findMany({
       where: {
         profesionalId: currentUser.id,
@@ -36,18 +50,8 @@ export async function GET(request: NextRequest) {
         }
       },
       include: {
-        obraSocial: {
-          select: {
-            id: true,
-            nombre: true
-          }
-        },
-        paciente: {
-          select: {
-            nombre: true,
-            apellido: true
-          }
-        }
+        obraSocial: { select: { id: true, nombre: true } },
+        paciente: { select: { nombre: true, apellido: true } }
       }
     })
 
@@ -83,23 +87,35 @@ export async function GET(request: NextRequest) {
     const cancellationRate = totalAppointments > 0 ? 
       Math.round((cancelledAppointments / totalAppointments) * 100) : 0
 
-    // Recent appointments (last 5)
-    const recentAppointments = appointments
-      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
-      .slice(0, 5)
-      .map(appointment => ({
-        id: appointment.id,
-        fecha: appointment.fecha,
-        paciente: `${appointment.paciente.apellido}, ${appointment.paciente.nombre}`,
-        estado: appointment.estado,
-        motivo: appointment.motivo,
-        obraSocial: appointment.obraSocial?.nombre || 'Particular'
-      }))
+    // Recent appointments (last 5 overall - independent of date filter)
+    const now = new Date()
+    const recentOverall = await prisma.appointment.findMany({
+      where: { 
+        profesionalId: currentUser.id,
+        fecha: { lte: now }
+      },
+      orderBy: { fecha: 'desc' },
+      take: 5,
+      include: {
+        obraSocial: { select: { nombre: true } },
+        paciente: { select: { nombre: true, apellido: true } }
+      }
+    })
+
+    const recentAppointments = recentOverall.map(appointment => ({
+      id: appointment.id,
+      fecha: appointment.fecha,
+      paciente: `${appointment.paciente.apellido}, ${appointment.paciente.nombre}`,
+      estado: appointment.estado,
+      motivo: appointment.motivo,
+      obraSocial: appointment.obraSocial?.nombre || 'Particular'
+    }))
 
     const stats = {
       dateRange: {
         from: fromDate,
-        to: toDate
+        to: toDate,
+        allTime
       },
       totalAppointments,
       statusCounts,

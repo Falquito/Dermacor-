@@ -35,6 +35,11 @@ export function DatePicker({
   fromYear,
   toYear,
 }: DatePickerProps) {
+  // Use defaultMonth to initialize calendar on current selected date without locking navigation
+  const defaultMonth = date ?? new Date()
+  const handleSelect = (d?: Date) => {
+    onDateChange(d)
+  }
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -55,7 +60,8 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={date}
-          onSelect={onDateChange}
+          onSelect={handleSelect}
+          defaultMonth={defaultMonth}
           initialFocus
           locale={es}
           captionLayout={captionLayout}

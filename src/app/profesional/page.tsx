@@ -89,11 +89,31 @@ export default function ProfesionalPage() {
     setRefreshKey((value) => value + 1);
   };
 
-  const enableAllTime = () => {
-    setAllTime(true);
-    setDateFrom(undefined);
-    setDateTo(undefined);
-    setRefreshKey((value) => value + 1);
+  const toggleAllTime = () => {
+    if (allTime) {
+      // Turning off: restore default last 30 days window
+      const { from, to } = getDefaultDateRange();
+      setAllTime(false);
+      setDateFrom(from);
+      setDateTo(to);
+      setRefreshKey(v => v + 1);
+    } else {
+      // Turning on: clear dates and fetch all time
+      setAllTime(true);
+      setDateFrom(undefined);
+      setDateTo(undefined);
+      setRefreshKey(v => v + 1);
+    }
+  };
+
+  // When user sets any date manually, exit allTime mode automatically
+  const handleDateFromChange = (d?: Date) => {
+    if (d) setAllTime(false);
+    setDateFrom(d);
+  };
+  const handleDateToChange = (d?: Date) => {
+    if (d) setAllTime(false);
+    setDateTo(d);
   };
 
   // Fetch stats when dates change
@@ -104,7 +124,9 @@ export default function ProfesionalPage() {
 
         let params = new URLSearchParams();
 
-        if (!allTime) {
+        if (allTime) {
+          params.set('allTime', '1');
+        } else {
           if (!dateFrom || !dateTo) return;
 
           const from = new Date(dateFrom);
@@ -123,7 +145,8 @@ export default function ProfesionalPage() {
           });
         }
 
-        const response = await fetch(`/api/professional-stats?${params.toString()}`);
+  const qs = params.toString();
+  const response = await fetch(`/api/professional-stats${qs ? `?${qs}` : ''}`);
         if (!response.ok) throw new Error('Error fetching stats');
 
         const data = await response.json();
@@ -245,7 +268,7 @@ export default function ProfesionalPage() {
   if (loading) {
     return (
       <main className="flex-1 p-5 md:p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
             <span className="ml-2 text-gray-600">Cargando estadísticas...</span>
@@ -257,7 +280,7 @@ export default function ProfesionalPage() {
 
   return (
     <main className="flex-1 p-5 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         {/* Header with date filters */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -275,7 +298,7 @@ export default function ProfesionalPage() {
                 <label className="text-sm font-medium text-gray-700">Desde</label>
                 <DatePicker
                   date={dateFrom}
-                  onDateChange={setDateFrom}
+                  onDateChange={handleDateFromChange}
                   placeholder="Selecciona una fecha"
                   captionLayout="dropdown"
                   fromYear={currentYear - 10}
@@ -287,7 +310,7 @@ export default function ProfesionalPage() {
                 <label className="text-sm font-medium text-gray-700">Hasta</label>
                 <DatePicker
                   date={dateTo}
-                  onDateChange={setDateTo}
+                  onDateChange={handleDateToChange}
                   placeholder="Selecciona una fecha"
                   captionLayout="dropdown"
                   fromYear={currentYear - 10}
@@ -306,8 +329,13 @@ export default function ProfesionalPage() {
               </button>
               <button
                 type="button"
-                onClick={enableAllTime}
-                className="w-full rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 sm:w-auto"
+                onClick={toggleAllTime}
+                aria-pressed={allTime}
+                className={`w-full rounded-md px-4 py-1.5 text-sm font-medium transition sm:w-auto border
+                  ${allTime
+                    ? 'bg-emerald-600 border-emerald-600 text-white shadow hover:bg-emerald-500'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'}
+                `}
               >
                 Todos los tiempos
               </button>
@@ -439,16 +467,16 @@ export default function ProfesionalPage() {
           </div>
 
           {/* Status Bar Chart */}
-          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
               Estados de turnos
             </h3>
             {statusChartData && stats?.totalAppointments ? (
-              <div className="h-64">
+              <div className="flex-1 min-h-[260px]">
                 <Bar data={statusChartData} options={barChartOptions} />
               </div>
             ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500">
+              <div className="flex-1 min-h-[200px] flex items-center justify-center text-gray-500">
                 <p>No hay datos para mostrar</p>
               </div>
             )}

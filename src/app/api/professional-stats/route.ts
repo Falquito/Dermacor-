@@ -24,8 +24,12 @@ export async function GET(request: NextRequest) {
     defaultFrom.setDate(defaultFrom.getDate() - 30)
     const defaultTo = new Date()
 
-    let fromDate = dateFrom ? new Date(dateFrom) : defaultFrom
-    let toDate = dateTo ? new Date(dateTo) : defaultTo
+  let fromDate = dateFrom ? new Date(dateFrom) : defaultFrom
+  let toDate = dateTo ? new Date(dateTo) : defaultTo
+
+  // Normalizar a rango completo de días (inicio y fin)
+  fromDate.setHours(0, 0, 0, 0)
+  toDate.setHours(23, 59, 59, 999)
 
     // If allTime flag: determine min/max fechas for this profesional
     if (allTime) {
@@ -37,6 +41,8 @@ export async function GET(request: NextRequest) {
       if (extremes.length > 0) {
         fromDate = extremes[0].fecha
         toDate = extremes[extremes.length - 1].fecha
+        fromDate.setHours(0,0,0,0)
+        toDate.setHours(23,59,59,999)
       }
     }
 

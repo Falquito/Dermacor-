@@ -104,7 +104,7 @@ export async function GET(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    if (!currentUser.roles.includes('MESA_ENTRADA') && !currentUser.roles.includes('GERENTE')) {
+    if (!currentUser.roles.includes('MESA_ENTRADA') && !currentUser.roles.includes('GERENTE') && !currentUser.roles.includes('PROFESIONAL')) {
       return NextResponse.json({ error: 'No tienes permisos para ver pacientes' }, { status: 403 })
     }
 

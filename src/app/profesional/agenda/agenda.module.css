@@ -347,13 +347,19 @@
 
 .monthGrid { 
   display: grid; 
-  grid-template-columns: repeat(7, 1fr); 
+  /* Use minmax(0,1fr) to ensure all 7 columns share the space equally and
+     prevent longer labels (e.g., "Sáb") from forcing intrinsic sizing that
+     visually compresses the last columns. */
+  grid-template-columns: repeat(7, minmax(0, 1fr)); 
   border: 1px solid #e5e7eb; 
   border-radius: 16px; 
   overflow: hidden; 
   background: white; 
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
+/* Ensure header and day cells don't impose intrinsic minimums that could
+   redistribute width unevenly across the 7 columns. */
+.monthHeaderCell, .monthCell { min-width: 0; }
 .monthHeaderCell { 
   background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); 
   padding: 12px 8px; 
@@ -381,6 +387,14 @@
 .monthCell:hover {
   background: #fafafa;
   border-color: #e5e7eb;
+}
+.monthCellToday {
+  background: #f0fdf4; /* emerald-50 */
+  position: relative;
+  box-shadow: inset 0 0 0 1px #a7f3d0, 0 0 0 1px rgba(16, 185, 129, 0.08);
+}
+.monthCellToday:hover {
+  background: #ecfdf5;
 }
 .monthCell:nth-child(7n) { 
   border-right: none; 
@@ -437,9 +451,10 @@
 }
 .monthEventHeader {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 6px;
+  flex-wrap: wrap; /* allow status to wrap to next line if tight */
 }
 .monthEventTime {
   font-size: 11px;
@@ -463,6 +478,19 @@
   background: var(--event-status-bg, rgba(5, 150, 105, 0.12));
   color: var(--event-status-fg, #047857);
   box-shadow: inset 0 0 0 1px var(--event-status-border, rgba(5, 150, 105, 0.24));
+  max-width: 100%;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* If the cell is very narrow (e.g. mobile two-column stacking), hide status chip to avoid overflow */
+@media (max-width: 520px) {
+  .monthEventStatus { display: none; }
+}
+
+/* Slightly constrained widths: truncate status text */
+@media (min-width: 521px) and (max-width: 640px) {
+  .monthEventStatus { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
 }
 .monthEventTitle {
   font-weight: 600;
@@ -474,6 +502,48 @@
 .more { font-size: 11px; color: #0b7a5c; opacity: 0.8; }
 
 .ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* Marquee (auto-scroll) for overflowing patient names */
+@keyframes agendaMarquee {
+  0% { transform: translateX(0); }
+  10% { transform: translateX(0); }
+  90% { transform: translateX(calc(-1 * var(--scroll-distance, 50%))); }
+  100% { transform: translateX(calc(-1 * var(--scroll-distance, 50%))); }
+}
+@keyframes agendaMarqueePing {
+  0% { transform: translateX(0); }
+  40% { transform: translateX(0); }
+  50% { transform: translateX(calc(-1 * var(--scroll-distance, 50%))); }
+  90% { transform: translateX(calc(-1 * var(--scroll-distance, 50%))); }
+  100% { transform: translateX(0); }
+}
+.marqueeContainer {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  /* Provide slight padding so text doesn't get cut abruptly */
+  --marquee-gap: 32px;
+}
+.marqueeTrack {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--marquee-gap);
+  min-width: max-content;
+  animation: agendaMarquee var(--marquee-duration, 10s) linear infinite;
+  padding-right: var(--marquee-gap);
+  will-change: transform;
+}
+.marqueePing .marqueeTrack {
+  animation: agendaMarqueePing var(--marquee-duration, 8s) ease-in-out infinite;
+}
+.marqueePause:hover .marqueeTrack { animation-play-state: paused; }
+/* Optional fade (unused for ping-pong variant, can re-enable if needed) */
+.marqueeFade:before, .marqueeFade:after { position: absolute; top: 0; bottom: 0; width: 24px; pointer-events: none; content: ''; }
+.marqueeFade:before { left: 0; background: linear-gradient(to right, white, rgba(255,255,255,0)); }
+.marqueeFade:after { right: 0; background: linear-gradient(to left, white, rgba(255,255,255,0)); }
+/* Reduce speed for very long titles by extending duration using a modifier */
+.marqueeSlow .marqueeTrack { animation-duration: 14s; }
+.marqueeFast .marqueeTrack { animation-duration: 8s; }
 
 /* Popover */
 .popoverBackdrop { 

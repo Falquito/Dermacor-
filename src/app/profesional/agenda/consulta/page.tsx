@@ -383,14 +383,14 @@ export default function ConsultaDesdeAgendaPage() {
 
   if (!appointmentId) {
     return (
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="w-full px-6 py-6">
         <div className="bg-white border rounded-lg shadow-sm p-6 space-y-4 text-center">
           <AlertCircle className="h-8 w-8 text-rose-500 mx-auto" />
           <div>
             <h1 className="text-lg font-semibold text-gray-900">Falta el identificador del turno</h1>
             <p className="text-sm text-gray-600">Reingresá desde la agenda para cargar la consulta correspondiente.</p>
           </div>
-          <Button onClick={() => router.push("/profesional/agenda")}>Volver a la agenda</Button>
+          <Button onClick={() => router.push(`/profesional/consultas?appointmentId=${appointmentId}`)}>Volver a consultas</Button>
         </div>
       </div>
     )
@@ -398,7 +398,7 @@ export default function ConsultaDesdeAgendaPage() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto p-6">
+      <div className="w-full px-6 py-6">
         <div className="bg-white border rounded-lg shadow-sm p-12 text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-emerald-600 mx-auto" />
           <p className="text-sm text-gray-600">Preparando la consulta...</p>
@@ -409,14 +409,14 @@ export default function ConsultaDesdeAgendaPage() {
 
   if (error || !detail) {
     return (
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="w-full px-6 py-6">
         <div className="bg-white border rounded-lg shadow-sm p-6 space-y-4 text-center">
           <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto" />
           <div>
             <h1 className="text-lg font-semibold text-gray-900">No pudimos abrir la consulta</h1>
             <p className="text-sm text-gray-600">{error || "Intentá nuevamente más tarde."}</p>
           </div>
-          <Button onClick={() => router.push("/profesional/agenda")}>Volver a la agenda</Button>
+          <Button onClick={() => router.push(`/profesional/consultas?appointmentId=${appointmentId}`)}>Volver a consultas</Button>
         </div>
       </div>
     )
@@ -431,17 +431,17 @@ export default function ConsultaDesdeAgendaPage() {
   const canCancel = ACTIVE_APPOINTMENT_STATUSES.includes(appointment.estado)
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="w-full px-6 py-6 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
             className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
-            onClick={() => router.push("/profesional/agenda")}
+            onClick={() => router.push(`/profesional/consultas?appointmentId=${appointmentId}`)}
           >
             <ArrowLeft className="h-4 w-4" />
-            Agenda
+            Consulta
           </Button>
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Detalle de la consulta</h1>

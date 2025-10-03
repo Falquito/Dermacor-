@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { AppointmentStatus } from '@prisma/client'
 import { addDays, startOfDay } from 'date-fns'
 import { Calendar, Clock, ChevronRight, Search, Loader2, AlertCircle, CheckCircle2, Pill, FlaskRound, ClipboardList, Stethoscope, Plus, RefreshCw, X } from 'lucide-react'
@@ -195,6 +196,8 @@ const Tabs = ['diagnosticos', 'prescripciones', 'estudios', 'medicaciones'] as c
 const DEFAULT_PAGE_SIZE = 20
 
 export default function ConsultasContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [totalAppointments, setTotalAppointments] = useState(0)
   const [page, setPage] = useState(1)
@@ -244,6 +247,7 @@ export default function ConsultasContent() {
   const endItem = totalAppointments === 0 ? 0 : Math.min(totalAppointments, startItem + appointments.length - 1)
   const currentYear = new Date().getFullYear()
 
+  const singleFetchTriedRef = useRef(false)
   const loadAppointments = async () => {
     try {
       setLoadingAppointments(true)
@@ -251,34 +255,43 @@ export default function ConsultasContent() {
       if (filters.dateFrom) params.set('dateFrom', formatToInputDate(filters.dateFrom))
       if (filters.dateTo) params.set('dateTo', formatToInputDate(filters.dateTo))
       if (filters.status) params.set('status', filters.status as AppointmentStatus)
-      if (patientFilterId) {
-        params.set('patientId', patientFilterId)
-      } else if (filters.patient) {
-        params.set('patient', filters.patient)
-      }
+      if (patientFilterId) params.set('patientId', patientFilterId)
+      else if (filters.patient) params.set('patient', filters.patient)
       params.set('onlyMine', String(onlyMine))
       params.set('limit', String(pageSize))
       params.set('page', String(page))
 
       const response = await fetch(`/api/professional/appointments?${params.toString()}`)
       const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'No se pudieron cargar las consultas')
-      }
+      if (!response.ok) throw new Error(data.error || 'No se pudieron cargar las consultas')
 
       setAppointments(data.appointments)
       setTotalAppointments(data.total)
 
-      if (data.appointments.length > 0) {
-        setSelectedAppointmentId((prev) => {
-          if (prev && data.appointments.some((appointment: Appointment) => appointment.id === prev)) {
-            return prev
-          }
-          return data.appointments[0].id
-        })
+      const qId = searchParams.get('appointmentId')
+      if (qId) {
+        if (data.appointments.some((a: Appointment) => a.id === qId)) {
+          setSelectedAppointmentId(qId)
+        } else if (!singleFetchTriedRef.current) {
+          singleFetchTriedRef.current = true
+          try {
+            const res = await fetch(`/api/professional/appointments/${qId}`)
+            const single = await res.json()
+            if (res.ok && single?.appointment) {
+              setAppointments((prev) => [single.appointment, ...prev])
+              setSelectedAppointmentId(qId)
+            }
+          } catch {/* ignore */}
+        }
       } else {
-        setSelectedAppointmentId(null)
+        if (data.appointments.length > 0) {
+          setSelectedAppointmentId((prev) => {
+            if (prev && data.appointments.some((appointment: Appointment) => appointment.id === prev)) return prev
+            return data.appointments[0].id
+          })
+        } else {
+          setSelectedAppointmentId(null)
+        }
       }
     } catch (error) {
       console.error(error)
@@ -292,6 +305,18 @@ export default function ConsultasContent() {
     loadAppointments()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.dateFrom, filters.dateTo, filters.status, filters.patient, patientFilterId, refreshTicker, page, pageSize, onlyMine])
+
+  // (Removed separate preselection effect; logic handled in loadAppointments)
+
+  // Keep URL in sync when selection changes (replace state without full navigation)
+  useEffect(() => {
+    if (!selectedAppointmentId) return
+    const params = new URLSearchParams(Array.from(searchParams.entries()))
+    if (params.get('appointmentId') !== selectedAppointmentId) {
+      params.set('appointmentId', selectedAppointmentId)
+      router.replace(`/profesional/consultas?${params.toString()}`)
+    }
+  }, [selectedAppointmentId, searchParams, router])
 
   useEffect(() => {
     const newTotalPages = Math.max(1, Math.ceil(totalAppointments / pageSize))
@@ -1493,12 +1518,11 @@ export default function ConsultasContent() {
                     <div className="flex flex-wrap justify-end gap-2">
                       <Button
                         asChild
-                        variant="outline"
                         size="sm"
-                        className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm !text-white"
                       >
-                        <Link href={`/profesional/agenda/consulta?id=${selectedAppointment.id}`}>
-                          Ver detalle integral
+                        <Link href={`/profesional/agenda/consulta?id=${selectedAppointment.id}`} className="text-white">
+                          Detalle de Consulta
                         </Link>
                       </Button>
                       <Button

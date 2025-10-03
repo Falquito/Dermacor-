@@ -203,9 +203,12 @@ export default function ConsultasContent() {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(DEFAULT_PAGE_SIZE)
   const [loadingAppointments, setLoadingAppointments] = useState(true)
+  // Rango inicial: desde el día anterior hasta 8 días después
+  const initialDateFrom = useMemo(() => startOfDay(addDays(new Date(), -1)), [])
+  const initialDateTo = useMemo(() => startOfDay(addDays(new Date(), 8)), [])
   const [filters, setFilters] = useState({
-    dateFrom: undefined as Date | undefined,
-    dateTo: undefined as Date | undefined,
+    dateFrom: initialDateFrom as Date | undefined,
+    dateTo: initialDateTo as Date | undefined,
     status: '',
     patient: '',
   })

@@ -84,12 +84,23 @@ export async function GET(request: NextRequest) {
     }
 
     if (fecha) {
-      const fechaDate = new Date(fecha)
-      const fechaStart = new Date(fechaDate.getFullYear(), fechaDate.getMonth(), fechaDate.getDate(), 0, 0, 0)
-      const fechaEnd = new Date(fechaDate.getFullYear(), fechaDate.getMonth(), fechaDate.getDate(), 23, 59, 59)
-      where.fecha = {
-        gte: fechaStart,
-        lte: fechaEnd
+      // Evitar desfase: parsear manualmente YYYY-MM-DD como fecha local
+      // En lugar de new Date('2025-10-02') que interpreta UTC en algunos entornos
+      const match = fecha.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      if (match) {
+        const [, yStr, mStr, dStr] = match
+        const y = parseInt(yStr, 10)
+        const m = parseInt(mStr, 10) - 1
+        const d = parseInt(dStr, 10)
+        const fechaStart = new Date(y, m, d, 0, 0, 0, 0)
+        const fechaEnd = new Date(y, m, d, 23, 59, 59, 999)
+        where.fecha = { gte: fechaStart, lte: fechaEnd }
+      } else {
+        // Fallback a comportamiento previo si el formato no coincide
+        const fechaDate = new Date(fecha)
+        const fechaStart = new Date(fechaDate.getFullYear(), fechaDate.getMonth(), fechaDate.getDate(), 0, 0, 0)
+        const fechaEnd = new Date(fechaDate.getFullYear(), fechaDate.getMonth(), fechaDate.getDate(), 23, 59, 59)
+        where.fecha = { gte: fechaStart, lte: fechaEnd }
       }
     }
     

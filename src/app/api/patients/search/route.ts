@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
+import { Prisma } from '@prisma/client'
 
 // GET /api/patients/search - Buscar pacientes (para profesionales)
 export async function GET(request: NextRequest) {
@@ -25,16 +26,59 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ patients: [] })
     }
 
+    // Mejorar la búsqueda para ser más flexible
+    const searchTermNormalized = searchTerm.trim()
+    const searchWords = searchTermNormalized.split(/[\s,]+/).filter(word => word.length > 0)
+    
+    // Crear condiciones de búsqueda más flexibles
+    const searchConditions: Prisma.PatientWhereInput[] = []
+    
+    // 1. Búsqueda exacta en campos individuales
+    searchConditions.push({
+      OR: [
+        { nombre: { contains: searchTermNormalized, mode: 'insensitive' as const } },
+        { apellido: { contains: searchTermNormalized, mode: 'insensitive' as const } },
+        { dni: { startsWith: searchTermNormalized } },
+        { email: { contains: searchTermNormalized, mode: 'insensitive' as const } }
+      ]
+    })
+    
+    // 2. Si hay múltiples palabras, buscar combinaciones
+    if (searchWords.length >= 2) {
+      // Buscar "Nombre Apellido" o "Apellido Nombre"
+      searchConditions.push({
+        AND: searchWords.map(word => ({
+          OR: [
+            { nombre: { contains: word, mode: 'insensitive' as const } },
+            { apellido: { contains: word, mode: 'insensitive' as const } }
+          ]
+        }))
+      })
+      
+      // Buscar formato "Apellido, Nombre" - primer palabra como apellido, resto como nombre
+      if (searchWords.length === 2) {
+        searchConditions.push({
+          AND: [
+            { apellido: { contains: searchWords[0], mode: 'insensitive' as const } },
+            { nombre: { contains: searchWords[1], mode: 'insensitive' as const } }
+          ]
+        })
+        
+        // También buscar formato "Nombre Apellido"
+        searchConditions.push({
+          AND: [
+            { nombre: { contains: searchWords[0], mode: 'insensitive' as const } },
+            { apellido: { contains: searchWords[1], mode: 'insensitive' as const } }
+          ]
+        })
+      }
+    }
+
     const patients = await prisma.patient.findMany({
       where: {
         AND: [
           {
-            OR: [
-              { nombre: { contains: searchTerm.trim(), mode: 'insensitive' } },
-              { apellido: { contains: searchTerm.trim(), mode: 'insensitive' } },
-              { dni: { contains: searchTerm.trim() } },
-              { email: { contains: searchTerm.trim(), mode: 'insensitive' } }
-            ]
+            OR: searchConditions
           },
           { activo: true } // Solo pacientes activos
         ]

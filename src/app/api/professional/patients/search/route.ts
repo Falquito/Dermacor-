@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { normalizeDiacritics } from '@/lib/text-normalize'
 
 const querySchema = z.object({
   term: z.string().trim().min(2, 'Ingrese al menos 2 caracteres'),
@@ -27,7 +28,11 @@ export async function GET(request: NextRequest) {
 
     const { term, limit = 10 } = parsed.data
 
-    const patients = await prisma.patient.findMany({
+    const normTerm = normalizeDiacritics(term)
+
+    // Fetch a broader set first (limit * 4 up to 100) to allow in-memory accent-insensitive filtering
+    const prefetchSize = Math.min(limit * 4, 100)
+    const raw = await prisma.patient.findMany({
       where: {
         OR: [
           { nombre: { contains: term, mode: 'insensitive' } },
@@ -47,10 +52,22 @@ export async function GET(request: NextRequest) {
         { apellido: 'asc' },
         { nombre: 'asc' },
       ],
-      take: limit,
+      take: prefetchSize,
     })
 
-    return NextResponse.json({ patients })
+    const filtered = raw.filter(p => {
+      const nombre = normalizeDiacritics(p.nombre)
+      const apellido = normalizeDiacritics(p.apellido)
+      const full = `${apellido} ${nombre}`.trim()
+      return (
+        nombre.includes(normTerm) ||
+        apellido.includes(normTerm) ||
+        full.includes(normTerm) ||
+        (p.dni ?? '').includes(term)
+      )
+    })
+
+    return NextResponse.json({ patients: filtered.slice(0, limit), total: filtered.length, accentInsensitive: true })
   } catch (error) {
     console.error('[API][professional][patients][search] error:', error)
     return NextResponse.json({ error: 'Error al buscar pacientes' }, { status: 500 })

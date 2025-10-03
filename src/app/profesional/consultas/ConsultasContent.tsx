@@ -203,9 +203,12 @@ export default function ConsultasContent() {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(DEFAULT_PAGE_SIZE)
   const [loadingAppointments, setLoadingAppointments] = useState(true)
+  // Rango inicial: desde el día anterior hasta 8 días después
+  const initialDateFrom = useMemo(() => startOfDay(addDays(new Date(), -1)), [])
+  const initialDateTo = useMemo(() => startOfDay(addDays(new Date(), 8)), [])
   const [filters, setFilters] = useState({
-    dateFrom: undefined as Date | undefined,
-    dateTo: undefined as Date | undefined,
+    dateFrom: initialDateFrom as Date | undefined,
+    dateTo: initialDateTo as Date | undefined,
     status: '',
     patient: '',
   })
@@ -256,7 +259,12 @@ export default function ConsultasContent() {
       if (filters.dateTo) params.set('dateTo', formatToInputDate(filters.dateTo))
       if (filters.status) params.set('status', filters.status as AppointmentStatus)
       if (patientFilterId) params.set('patientId', patientFilterId)
-      else if (filters.patient) params.set('patient', filters.patient)
+      else if (filters.patient) {
+        params.set('patient', filters.patient)
+        // provide normalized version (strip diacritics) for future API support
+        const norm = filters.patient.normalize('NFD').replace(/\p{Diacritic}/gu, '')
+        params.set('patientNorm', norm)
+      }
       params.set('onlyMine', String(onlyMine))
       params.set('limit', String(pageSize))
       params.set('page', String(page))
@@ -1523,16 +1531,6 @@ export default function ConsultasContent() {
                       >
                         <Link href={`/profesional/agenda/consulta?id=${selectedAppointment.id}`} className="text-white">
                           Detalle de Consulta
-                        </Link>
-                      </Button>
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="border-sky-300 text-sky-700 hover:bg-sky-50"
-                      >
-                        <Link href={`/profesional/pacientes?patientId=${selectedAppointment.paciente.id}`}>
-                          Ficha del paciente
                         </Link>
                       </Button>
                       <Button

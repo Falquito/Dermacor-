@@ -40,11 +40,10 @@ export async function GET(request: NextRequest) {
       where.estado = status as AppointmentStatus;
     }
 
-    // Obtener el total de citas para paginación
-    const total = await prisma.appointment.count({ where });
-
-    // Obtener las citas con paginación
-    const appointments = await prisma.appointment.findMany({
+    // Cargar en paralelo: total, citas paginadas y datos básicos del paciente
+    const [total, appointments, patient] = await Promise.all([
+      prisma.appointment.count({ where }),
+      prisma.appointment.findMany({
       where,
       include: {
         profesional: {
@@ -101,7 +100,22 @@ export async function GET(request: NextRequest) {
       },
       skip: (page - 1) * pageSize,
       take: pageSize,
-    });
+      }),
+      prisma.patient.findUnique({
+        where: { id: patientId },
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          dni: true,
+          fechaNacimiento: true,
+          genero: true,
+          telefono: true,
+          email: true,
+          direccion: true,
+        }
+      })
+    ])
 
     // Obtener medicaciones activas del paciente
     const medications = await prisma.patientMedication.findMany({
@@ -114,6 +128,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
+      patient,
       appointments,
       medications,
       total,

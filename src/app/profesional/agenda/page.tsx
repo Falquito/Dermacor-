@@ -85,6 +85,14 @@ function minutesSinceStartOfGrid(date: Date) {
   return date.getHours() * 60 + date.getMinutes() - startHour * 60
 }
 
+// Remove diacritics to allow accent-insensitive search
+function normalizeDiacritics(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+}
+
 export default function AgendaPage() {
   const [view, setView] = useState<View>('week')
   const [date, setDate] = useState<Date>(new Date())
@@ -233,12 +241,17 @@ export default function AgendaPage() {
     let data = appointments
     if (statusFilter.length) data = data.filter((appointment) => statusFilter.includes(appointment.status))
     if (search.trim()) {
-      const query = search.trim().toLowerCase()
+      const raw = search.trim().toLowerCase()
+      const query = normalizeDiacritics(raw)
       data = data.filter((appointment) => {
-        const titleMatch = appointment.title.toLowerCase().includes(query)
-        const notesMatch = appointment.notes?.toLowerCase().includes(query)
-        const patientMatch = appointment.patientId?.toLowerCase().includes(query)
-        return titleMatch || Boolean(notesMatch) || Boolean(patientMatch)
+        const titleNorm = normalizeDiacritics(appointment.title)
+        const notesNorm = appointment.notes ? normalizeDiacritics(appointment.notes) : ''
+        const patientNorm = appointment.patientId ? normalizeDiacritics(appointment.patientId) : ''
+        return (
+          titleNorm.includes(query) ||
+          (notesNorm && notesNorm.includes(query)) ||
+          (patientNorm && patientNorm.includes(query))
+        )
       })
     }
     return data
@@ -393,7 +406,7 @@ export default function AgendaPage() {
 
         {/* Calendar + Status grid */}
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,2.4fr)_minmax(280px,1fr)] items-stretch">
+  <section className="grid gap-6 xl:grid-cols-[minmax(0,2.4fr)_minmax(320px,1fr)] items-stretch">
           <div className="flex flex-col gap-6 min-w-0 h-full">
             <div className="relative">
               {loading && (
@@ -489,102 +502,130 @@ export default function AgendaPage() {
               </div>
             </div>
           </div>
-
           <aside className="flex flex-col h-full">
-            <StatusLegend summary={statusSummary} total={displayAppointments.length} />
-          </aside>
-        </section>
-
-        {/* Compact filter tools panel now placed AFTER agenda & summary */}
-        <section className="rounded-2xl border border-emerald-100 bg-white px-5 py-4 shadow-sm">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2">
-                <div className="rounded-xl bg-emerald-100 p-1.5">
-                  <Filter className="h-4 w-4 text-emerald-600" />
+            <section className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm h-full flex flex-col">
+              {/* Compact Status Summary (no internal scroll, natural height) */}
+              <div className="mb-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="rounded-xl bg-emerald-100 p-1.5">
+                    <ListChecks className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <h2 className="text-sm font-semibold text-emerald-900">Resumen</h2>
+                  <span className="text-[10px] text-emerald-600 font-medium">{displayAppointments.length} visibles</span>
                 </div>
-                <h2 className="text-sm font-semibold text-emerald-900">Filtros</h2>
-                {hasActiveFilters && (
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">Activos</span>
-                )}
+                <div className="space-y-3">
+                  {statusSummary.map(({ status, filtered, total: stTotal, percentage }) => (
+                    <div key={status} className="flex items-center gap-2">
+                      <span className={`${styles.badge} ${styles[`status_${status}`]}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between text-[11px] font-medium text-emerald-900">
+                          <span className="truncate">{getStatusLabel(status)}</span>
+                          <span className="text-[10px] text-emerald-700/70">{filtered}</span>
+                        </div>
+                        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-emerald-50">
+                          <div
+                            className={`${styles[`status_${status}`]} h-full rounded-full transition-all`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <p className="mt-0.5 text-[9px] text-emerald-600/70">
+                          {stTotal > 0 ? `${filtered}/${stTotal} (${percentage}%)` : '—'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
-                >
-                  <X className="h-3 w-3" />
-                  Limpiar
-                </button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {statusSummary.map(({ status, filtered, total }) => {
-                const active = statusFilter.includes(status)
-                const showNumber = statusFilter.length === 0 || active
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => toggleStatus(status)}
-                    aria-pressed={active}
-                    className={`group inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${active ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100'}`}
-                  >
-                    <span className={`${styles.badge} ${styles[`status_${status}`]}`} />
-                    <span>{getStatusLabel(status)}</span>
-                    {showNumber && (
-                      <span className={`text-[10px] ${active ? 'text-emerald-100' : 'text-emerald-700/70'}`}>
-                        {filtered}/{total}
+              {/* Filters directly after summary, no large empty gap */}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-xl bg-emerald-100 p-1.5">
+                      <Filter className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <h2 className="text-sm font-semibold text-emerald-900">Filtros</h2>
+                    {hasActiveFilters && (
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">Activos</span>
+                    )}
+                  </div>
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="inline-flex items-center gap-1 rounded-full border border-emerald-200 px-2.5 py-1 text-[10px] font-medium text-emerald-700 transition hover:bg-emerald-50"
+                    >
+                      <X className="h-3 w-3" />
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 overflow-visible">
+                  {statusSummary.map(({ status, filtered, total }) => {
+                    const active = statusFilter.includes(status)
+                    const showNumber = statusFilter.length === 0 || active
+                    return (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => toggleStatus(status)}
+                        aria-pressed={active}
+                        className={`group inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium transition ${active ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100'}`}
+                      >
+                        <span className={`${styles.badge} ${styles[`status_${status}`]}`} />
+                        <span>{getStatusLabel(status)}</span>
+                        {showNumber && (
+                          <span className={`text-[9px] ${active ? 'text-emerald-100' : 'text-emerald-700/70'}`}> {filtered}/{total}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="flex flex-col gap-3 border-t border-emerald-50 pt-3">
+                  <div className="relative w-full">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+                    <input
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      placeholder="Buscar paciente, título o notas"
+                      className="w-full rounded-lg border border-emerald-200 bg-white py-2 pl-9 pr-8 text-sm text-emerald-900 placeholder:text-emerald-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 transition hover:text-emerald-600"
+                        aria-label="Limpiar búsqueda"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-emerald-700/80">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
+                      <Calendar className="h-3 w-3" />
+                      {periodLabel}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      {statusFilter.length ? statusFilter.map((status) => getStatusLabel(status)).join(', ') : 'Todos'}
+                    </span>
+                    {search && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                        “{search}”
                       </span>
                     )}
-                  </button>
-                )
-              })}
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-emerald-50 pt-3">
-              <div className="relative w-full sm:max-w-xs">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Buscar paciente, título o notas"
-                  className="w-full rounded-lg border border-emerald-200 bg-white py-2 pl-9 pr-8 text-sm text-emerald-900 placeholder:text-emerald-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 transition hover:text-emerald-600"
-                    aria-label="Limpiar búsqueda"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      {displayAppointments.length} visibles
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-[11px] text-emerald-700/80">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
-                  <Calendar className="h-3 w-3" />
-                  {periodLabel}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  {statusFilter.length ? statusFilter.map((status) => getStatusLabel(status)).join(', ') : 'Todos'}
-                </span>
-                {search && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-300" />
-                    “{search}”
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  {displayAppointments.length} visibles
-                </span>
-              </div>
-            </div>
-          </div>
+            </section>
+          </aside>
         </section>
+        {/* Removed standalone status summary; integrated into sidebar */}
 
         <AppointmentPopover
           appointment={active}
@@ -603,47 +644,7 @@ export default function AgendaPage() {
   )
 }
 
-function StatusLegend({ summary, total }: { summary: StatusSummary[]; total: number }) {
-  return (
-    <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm h-full flex flex-col">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-emerald-100 p-2">
-            <ListChecks className="h-4 w-4 text-emerald-600" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-emerald-900">Resumen de estados</h3>
-            <p className="text-xs text-emerald-700/70">
-              {total > 0 ? `${total} turnos en la vista actual` : 'Sin turnos en la vista actual'}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="mt-6 space-y-4 overflow-auto pr-1 flex-1">
-        {summary.map(({ status, filtered, total: stateTotal, percentage }) => (
-          <div key={status} className="flex items-center gap-3">
-            <span className={`${styles.badge} ${styles[`status_${status}`]}`} />
-            <div className="flex-1">
-              <div className="flex items-center justify-between text-sm font-medium text-emerald-900">
-                <span>{getStatusLabel(status)}</span>
-                <span className="text-xs font-semibold text-emerald-700/80">{filtered}</span>
-              </div>
-              <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-emerald-50">
-                <div
-                  className={`${styles[`status_${status}`]} h-full rounded-full transition-all`}
-                  style={{ width: `${percentage}%` }}
-                />
-              </div>
-              <p className="mt-1 text-[11px] text-emerald-700/70">
-                {stateTotal > 0 ? `${filtered} de ${stateTotal} turnos (${percentage}%)` : 'Sin turnos con este estado'}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+// StatusLegend component removed after integrating summary into sidebar
 
 // Reusable component for overflowing titles (ping-pong scroll)
 function MarqueeTitle({ text, className }: { text: string; className?: string }) {

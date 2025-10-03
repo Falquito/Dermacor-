@@ -279,9 +279,14 @@ export default function HistoriasClinicasContent() {
 
         const data = await response.json()
 
-        if (patient && context === 'search') {
-          setSelectedPatient(patient)
-          setPatientQueryParam(patient.id)
+        // Si llega el objeto patient desde el backend y aún no tenemos uno seleccionado, usarlo
+        if (!selectedPatient && data.patient) {
+          setSelectedPatient(data.patient)
+          setPatientQueryParam(data.patient.id)
+        } else if (patient && context === 'search') {
+          // Caso de selección manual desde búsqueda
+            setSelectedPatient(patient)
+            setPatientQueryParam(patient.id)
         }
 
         setAppointments(data.appointments || [])
@@ -363,15 +368,11 @@ export default function HistoriasClinicasContent() {
   useEffect(() => {
     const patientIdParam = searchParams.get('patientId')
     if (patientIdParam && patientIdParam !== initialPatientHandledRef.current) {
-      // Solo procesar si realmente cambió el parámetro
-      if (initialPatientHandledRef.current !== patientIdParam) {
-        initialPatientHandledRef.current = patientIdParam
-        const baseFilters = { dateFrom: '', dateTo: '', status: '' }
-        setCurrentView('history')
-        fetchHistory({ patientId: patientIdParam, requestedFilters: baseFilters, requestedPage: 1, context: 'initial' })
-      }
+      initialPatientHandledRef.current = patientIdParam
+      setCurrentView('history')
+      const baseFilters = { dateFrom: '', dateTo: '', status: '' }
+      fetchHistory({ patientId: patientIdParam, requestedFilters: baseFilters, requestedPage: 1, context: 'initial' })
     } else if (!patientIdParam && selectedPatient) {
-      // Si no hay parámetro pero hay paciente seleccionado, limpiar
       setCurrentView('search')
       setSelectedPatient(null)
     }
@@ -479,6 +480,16 @@ export default function HistoriasClinicasContent() {
   const HistoryView = useCallback(() => {
     // Si no hay paciente seleccionado, no renderizar nada
     if (!selectedPatient || !selectedPatient.id) {
+      if (loadingHistory) {
+        return (
+          <div className="space-y-8 animate-pulse">
+            <div className="h-40 rounded-3xl bg-gradient-to-br from-emerald-100/40 to-teal-100/40" />
+            <div className="h-56 rounded-3xl bg-white border border-emerald-100" />
+            <div className="h-40 rounded-3xl bg-white border border-emerald-100" />
+            <div className="h-96 rounded-3xl bg-white border border-emerald-100" />
+          </div>
+        )
+      }
       return null
     }
 
@@ -768,10 +779,23 @@ export default function HistoriasClinicasContent() {
                 </div>
                 
                 {loadingHistory ? (
-                  <div className="p-8 text-center">
-                    <Loader2 className="h-8 w-8 text-emerald-600 mx-auto mb-4 animate-spin" />
-                    <h5 className="text-lg font-semibold text-gray-900 mb-2">Cargando historia clínica</h5>
-                    <p className="text-gray-600">Obteniendo los datos del paciente...</p>
+                  <div className="p-6 space-y-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-full bg-emerald-100 animate-pulse" />
+                      <div className="flex-1 space-y-3">
+                        <div className="h-4 bg-emerald-100 rounded w-1/3" />
+                        <div className="h-3 bg-emerald-50 rounded w-1/4" />
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="p-4 border rounded-2xl bg-white/50">
+                          <div className="h-3 bg-gray-100 rounded w-1/4 mb-3" />
+                          <div className="h-3 bg-gray-100 rounded w-2/3 mb-2" />
+                          <div className="h-3 bg-gray-100 rounded w-1/2" />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : categoryData.total === 0 ? (
                   <div className="p-8 text-center">

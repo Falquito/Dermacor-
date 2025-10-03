@@ -130,10 +130,12 @@ export default function ProfesionalPage() {
           if (!dateFrom || !dateTo) return;
 
           const from = new Date(dateFrom);
+          // Normalizamos inicio de día
           from.setHours(0, 0, 0, 0);
 
           const to = new Date(dateTo);
-          to.setHours(0, 0, 0, 0);
+          // Importante: fin de día para incluir todos los turnos de la fecha seleccionada
+          to.setHours(23, 59, 59, 999);
 
           if (to < from) {
             return;

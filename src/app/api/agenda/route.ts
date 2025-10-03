@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { AppointmentStatus } from '@prisma/client'
+import { normalizeDiacritics } from '@/lib/text-normalize'
 
 // UI-specific appointment type (transformed from Prisma Appointment)
 type Appointment = {
@@ -91,8 +92,24 @@ export async function GET(req: NextRequest) {
     orderBy: { fecha: 'asc' },
   })
 
+  // Optional accent-insensitive secondary filter (Prisma 'insensitive' is case-insensitive, not accent-insensitive)
+  let filtered = rows
+  if (q) {
+    const normQ = normalizeDiacritics(q)
+    filtered = rows.filter((r) => {
+      const fields = [
+        r.motivo ?? '',
+        r.observaciones ?? '',
+        r.paciente?.nombre ?? '',
+        r.paciente?.apellido ?? '',
+        r.paciente?.dni ?? '',
+      ]
+      return fields.some((f) => normalizeDiacritics(f).includes(normQ))
+    })
+  }
+
   // Map to UI shape
-  const data: Appointment[] = rows.map((r) => {
+  const data: Appointment[] = filtered.map((r) => {
     const start = r.fecha
     const end = new Date(start.getTime() + (r.duracion ?? 30) * 60000)
     const fullName = r.paciente ? `${r.paciente.apellido}, ${r.paciente.nombre}`.trim() : ''

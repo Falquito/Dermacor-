@@ -91,8 +91,16 @@ const formatDateAR = (iso: string): string => {
   return `${d}/${m}/${y}`;
 };
 const toISODateLocal = (d: Date): string => {
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return local.toISOString().split("T")[0];
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/** Crear Date desde string YYYY-MM-DD en timezone local */
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
 };
 
 /** Validación: 1–100 y sin solapamientos */
@@ -482,8 +490,8 @@ export default function GerenteDashboard() {
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium text-gray-700">Desde</label>
                   <DatePicker
-                    date={dateFrom ? new Date(dateFrom) : undefined}
-                    onDateChange={(date) => setDateFrom(date ? date.toISOString().split('T')[0] : '')}
+                    date={dateFrom ? createLocalDate(dateFrom) : undefined}
+                    onDateChange={(date) => setDateFrom(date ? toISODateLocal(date) : '')}
                     placeholder="Selecciona una fecha"
                     captionLayout="dropdown"
                     fromYear={new Date().getFullYear() - 10}
@@ -494,8 +502,8 @@ export default function GerenteDashboard() {
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium text-gray-700">Hasta</label>
                   <DatePicker
-                    date={dateTo ? new Date(dateTo) : undefined}
-                    onDateChange={(date) => setDateTo(date ? date.toISOString().split('T')[0] : '')}
+                    date={dateTo ? createLocalDate(dateTo) : undefined}
+                    onDateChange={(date) => setDateTo(date ? toISODateLocal(date) : '')}
                     placeholder="Selecciona una fecha"
                     captionLayout="dropdown"
                     fromYear={new Date().getFullYear() - 10}

@@ -6,6 +6,12 @@ interface ReportRequest {
   endDate: string;
 }
 
+// Función para crear fecha local desde string YYYY-MM-DD
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export async function POST(req: Request) {
   try {
     const { startDate, endDate }: ReportRequest = await req.json();
@@ -17,14 +23,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // Crear fechas en timezone local
+    const startDateLocal = createLocalDate(startDate);
+    const endDateLocal = createLocalDate(endDate);
+    // Para incluir todo el día final, agregamos 23:59:59
+    endDateLocal.setHours(23, 59, 59, 999);
+
     // Agrupamos turnos por profesional dentro del rango
     const appointments = await prisma.appointment.groupBy({
       by: ["profesionalId"],
       _count: { id: true },
       where: {
         fecha: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
+          gte: startDateLocal,
+          lte: endDateLocal,
         },
       },
     });

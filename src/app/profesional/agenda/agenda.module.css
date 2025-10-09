@@ -428,7 +428,33 @@
 .monthCellMuted .monthCellDate { 
   color: #9ca3af; 
 }
-.monthEvents { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.monthEvents { 
+  margin-top: 6px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 6px; 
+  width: 100%; 
+  max-height: 60px; 
+  overflow-y: auto; 
+  overflow-x: hidden;
+  /* Scrollbar styling for better appearance */
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f9fafb;
+}
+.monthEvents::-webkit-scrollbar {
+  width: 4px;
+}
+.monthEvents::-webkit-scrollbar-track {
+  background: #f9fafb;
+  border-radius: 2px;
+}
+.monthEvents::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+.monthEvents::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
 .monthEvent {
   display: flex;
   flex-direction: column;
@@ -464,6 +490,9 @@
   color: var(--event-time, #0f766e);
   white-space: nowrap;
   font-feature-settings: 'tnum' 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .monthEventStatus {
   display: inline-flex;
@@ -494,7 +523,7 @@
 }
 .monthEventTitle {
   font-weight: 600;
-  color: var(--event-fg, #064e3b);
+  color: #000000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

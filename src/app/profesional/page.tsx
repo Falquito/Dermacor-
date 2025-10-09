@@ -11,6 +11,14 @@ import { DatePicker } from '@/components/ui/date-picker';
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
+// Helper function para convertir Date a string ISO local
+const toISODateLocal = (d: Date): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Types
 type ProfessionalStats = {
   dateRange: {
@@ -142,8 +150,8 @@ export default function ProfesionalPage() {
           }
 
           params = new URLSearchParams({
-            dateFrom: from.toISOString().split('T')[0],
-            dateTo: to.toISOString().split('T')[0]
+            dateFrom: toISODateLocal(from),
+            dateTo: toISODateLocal(to)
           });
         }
 

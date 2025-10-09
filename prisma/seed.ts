@@ -341,12 +341,14 @@ async function main() {
   const futureDays = 60
 
   const dayOffsets: number[] = []
+  // Turnos para hoy (2/10) y mañana (3/10)
+  dayOffsets.push(0, 1)
   // Turnos pasados
   for (let offset = 1; offset <= pastDays; offset++) {
     dayOffsets.push(-offset)
   }
   // Turnos futuros (incluyendo esta semana)
-  for (let offset = 1; offset <= futureDays; offset++) {
+  for (let offset = 2; offset <= futureDays; offset++) {
     dayOffsets.push(offset)
   }
 

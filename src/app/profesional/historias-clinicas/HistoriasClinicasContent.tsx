@@ -189,6 +189,20 @@ const calculateAge = (birthDate: string | Date | null): string | number => {
   return Math.abs(ageDate.getUTCFullYear() - 1970)
 }
 
+// Helper para convertir Date a string ISO local
+const formatToInputDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Helper para crear Date desde string YYYY-MM-DD en timezone local
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export default function HistoriasClinicasContent() {
   // Estado para controlar qué vista mostrar
   const [currentView, setCurrentView] = useState<'search' | 'history'>('search')
@@ -1660,10 +1674,10 @@ export default function HistoriasClinicasContent() {
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Fecha de realización *</label>
                   <DatePicker
-                    date={studyResultForm.fechaRealizacion ? new Date(studyResultForm.fechaRealizacion) : undefined}
+                    date={studyResultForm.fechaRealizacion ? createLocalDate(studyResultForm.fechaRealizacion) : undefined}
                     onDateChange={(date) => setStudyResultForm(prev => ({ 
                       ...prev, 
-                      fechaRealizacion: date ? date.toISOString().split('T')[0] : '' 
+                      fechaRealizacion: date ? formatToInputDate(date) : '' 
                     }))}
                     placeholder="Seleccionar fecha"
                     captionLayout="dropdown"

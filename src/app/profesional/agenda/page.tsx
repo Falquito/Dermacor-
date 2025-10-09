@@ -999,43 +999,47 @@ function MonthView({
           {(() => {
             const itemsFor = itemsForDay(day)
             if (itemsFor.length === 0) return null
-            const first = itemsFor[0]
-            const start = new Date(first.start)
-            const end = new Date(first.end)
-            const timeLabel = `${start.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}`
-            const statusLabel = getStatusLabel(first.status)
-            // We keep tooltip with full info but visually only show time + status to keep cell compact
+            
             return (
-              <div className={styles.monthEvents}>
-                <div
-                  key={first.id}
-                  className={`${styles.monthEvent} ${styles[`status_${first.status}`]} status_${first.status}`}
-                  title={`${first.title || 'Turno sin título'} · ${statusLabel} · ${timeLabel}`}
-                  onMouseEnter={(event) => {
-                    event.stopPropagation()
-                    onOpen(first, event.currentTarget as HTMLElement)
-                  }}
-                  onMouseMove={(event) => {
-                    event.stopPropagation()
-                    onOpen(first, event.currentTarget as HTMLElement)
-                  }}
-                  onMouseLeave={() => {
-                    if (onHoverLeave) onHoverLeave()
-                  }}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    event.preventDefault()
-                    onClickOpen(first)
-                  }}
-                >
-                  <div className={styles.monthEventHeader}>
-                    <span className={styles.monthEventTime}>{timeLabel}</span>
-                    <span className={`${styles.monthEventStatus} ${styles[`status_${first.status}`]}`}>{statusLabel}</span>
-                  </div>
-                </div>
-                {itemsFor.length > 1 && (
-                  <div className={styles.more}>+{itemsFor.length - 1} más</div>
-                )}
+              <div 
+                className={styles.monthEvents}
+                onScroll={() => {
+                  // Clear any active hover when scrolling
+                  if (onHoverLeave) onHoverLeave()
+                }}
+              >
+                {itemsFor.map((appointment) => {
+                  const start = new Date(appointment.start)
+                  const end = new Date(appointment.end)
+                  const timeLabel = `${start.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}`
+                  const statusLabel = getStatusLabel(appointment.status)
+                  
+                  return (
+                    <div
+                      key={appointment.id}
+                      className={`${styles.monthEvent} ${styles[`status_${appointment.status}`]} status_${appointment.status}`}
+                      title={`${appointment.title || 'Turno sin título'} · ${statusLabel} · ${timeLabel}`}
+                      onMouseEnter={(event) => {
+                        event.stopPropagation()
+                        onOpen(appointment, event.currentTarget as HTMLElement)
+                      }}
+                      onMouseLeave={(event) => {
+                        event.stopPropagation()
+                        if (onHoverLeave) onHoverLeave()
+                      }}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        event.preventDefault()
+                        onClickOpen(appointment)
+                      }}
+                    >
+                      <div className={styles.monthEventHeader}>
+                        <span className={styles.monthEventTime}>{timeLabel}</span>
+                        <span className={styles.monthEventTitle}>{appointment.title}</span>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )
           })()}

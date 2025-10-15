@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef } from 'react'
-import { Calendar, Clock, Users, TrendingUp } from 'lucide-react'
 import { Pie, Bar } from 'react-chartjs-2'
 import { AppointmentStatus } from '@prisma/client'
 import { getStatusLabel } from '@/lib/appointment-status'
@@ -145,71 +144,6 @@ export default function PracticaClinicaTab({
 
   return (
     <>
-      {/* Key metrics cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-emerald-200 bg-white/70 backdrop-blur-sm p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total de Turnos</p>
-              <p className="text-2xl font-bold text-gray-900">{stats?.totalAppointments || 0}</p>
-            </div>
-            <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Calendar className="h-6 w-6 text-white" />
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Promedio diario: {stats?.averageDaily || 0}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-emerald-200 bg-white/70 backdrop-blur-sm p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Tasa de Completado</p>
-              <p className="text-2xl font-bold text-emerald-600">{stats?.completionRate || 0}%</p>
-            </div>
-            <div className="h-12 w-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <TrendingUp className="h-6 w-6 text-white" />
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Turnos completados exitosamente
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-emerald-200 bg-white/70 backdrop-blur-sm p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Tasa de Cancelación</p>
-              <p className="text-2xl font-bold text-red-600">{stats?.cancellationRate || 0}%</p>
-            </div>
-            <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Clock className="h-6 w-6 text-white" />
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Cancelados y no asistieron
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-emerald-200 bg-white/70 backdrop-blur-sm p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Pacientes Únicos</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {stats?.recentAppointments ? new Set(stats.recentAppointments.map(a => a.paciente)).size : 0}
-              </p>
-            </div>
-            <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Users className="h-6 w-6 text-white" />
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            En el período seleccionado
-          </p>
-        </div>
-      </div>
-
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Obra Social Pie Chart */}

@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       },
       include: {
         obraSocial: { select: { id: true, nombre: true } },
-        paciente: { select: { nombre: true, apellido: true, fechaNacimiento: true } }
+        paciente: { select: { id: true, nombre: true, apellido: true, fechaNacimiento: true } }
       }
     })
 
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
       take: 5,
       include: {
         obraSocial: { select: { nombre: true } },
-        paciente: { select: { nombre: true, apellido: true } }
+        paciente: { select: { id: true, nombre: true, apellido: true } }
       }
     })
 
@@ -158,6 +158,7 @@ export async function GET(request: NextRequest) {
         // Se envía el objeto completo en lugar de solo el nombre
         obraSocial: a.obraSocial, 
         paciente: {
+          id: a.paciente?.id,
           nombre: a.paciente?.nombre,
           apellido: a.paciente?.apellido,
           fechaNacimiento: a.paciente?.fechaNacimiento || null

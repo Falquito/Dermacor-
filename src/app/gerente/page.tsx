@@ -42,7 +42,12 @@ interface EdadRange {
   label: string;
 }
 
-interface EdadReportData { rango: string; total: number; }
+interface EdadReportData { 
+  rango: string; 
+  totalM: number;
+  totalF: number;
+  total: number;
+}
 
 type PresetKey =
   | "hoy"
@@ -299,7 +304,6 @@ export default function GerenteDashboard() {
     setDateTo(to);
     void fetchReports({ startDate: from, endDate: to });
   };
-
   // Charts
   const especialidadChart = {
     labels: especialidades.map(e => e.nombre),
@@ -311,16 +315,28 @@ export default function GerenteDashboard() {
     }],
   };
 
-  const barColors = generateColors(edadData.length);
+  // Edad: ahora con dos datasets (Hombres / Mujeres)
+  const edadLabels = edadData.map(d => d.rango);
+  const hombresColor = "#2563EB";
+  const mujeresColor = "#F43F5E";
   const edadBarChart = {
-    labels: edadData.map(d => d.rango),
-    datasets: [{
-      label: "Pacientes",
-      data: edadData.map(d => d.total),
-      backgroundColor: barColors,
-      borderColor: "#fff",
-      borderWidth: 1,
-    }],
+    labels: edadLabels,
+    datasets: [
+      {
+        label: "Hombres",
+        data: edadData.map(d => d.totalM),
+        backgroundColor: edadData.map(() => hombresColor),
+        borderColor: "#fff",
+        borderWidth: 1,
+      },
+      {
+        label: "Mujeres",
+        data: edadData.map(d => d.totalF),
+        backgroundColor: edadData.map(() => mujeresColor),
+        borderColor: "#fff",
+        borderWidth: 1,
+      },
+    ],
   };
 
   /** Agregar rango sugerido: hueco → split; se agrega al FINAL y vibra fuerte */
@@ -530,7 +546,7 @@ export default function GerenteDashboard() {
             addDisabled={addDisabled}
             onEditRangos={() => { setEditModalOpen(true); setShowAdder(false); }}
             onAgregarRango={() => { setEditModalOpen(true); setShowAdder(true); }}
-            onApplyPreset={applyPreset}
+            onApplyPreset={(preset: string) => applyPreset(preset as PresetKey)}
           />
         )}
 

@@ -8,12 +8,15 @@ import {
   MapPin, 
   UserCheck, 
   Plus, 
-  Filter, 
   Loader2,
-  Settings
+  Settings,
+  Activity, 
+  BarChart3, 
+  Heart
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { TooltipItem } from 'chart.js'
 
@@ -68,6 +71,59 @@ const generateColors = (count: number, baseHue = 160): string[] => {
     colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`)
   }
   return colors
+}
+
+// Componente para métricas con animaciones (similar a las otras pestañas)
+interface MetricCardProps {
+  title: string
+  value: string | number
+  change?: number
+  subtitle?: string
+  Icon: React.ComponentType<{ className?: string }>
+  delay?: number
+}
+
+const MetricCard = ({ title, value, change, subtitle, Icon, delay = 0 }: MetricCardProps) => {
+  const [isVisible, setIsVisible] = useState(false)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), delay)
+    return () => clearTimeout(timer)
+  }, [delay])
+
+  const changeColor = change && change > 0 ? 'text-emerald-600' : change && change < 0 ? 'text-red-500' : 'text-gray-500'
+  const changeBg = change && change > 0 ? 'bg-emerald-50' : change && change < 0 ? 'bg-red-50' : 'bg-gray-50'
+
+  return (
+    <div 
+      className={`
+        rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/30 to-teal-50/20 
+        p-6 shadow-sm hover:shadow-lg transition-all duration-500 hover:border-emerald-200
+        ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+      `}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon className="h-5 w-5 text-emerald-600" />
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{title}</h3>
+          </div>
+          <div className="space-y-2">
+            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            {change !== undefined && (
+              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${changeBg} ${changeColor}`}>
+                {change > 0 ? '↗' : change < 0 ? '↘' : '→'} {Math.abs(change).toFixed(1)}%
+              </div>
+            )}
+            {subtitle && (
+              <p className="text-sm text-gray-600">{subtitle}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // Componente para rangos etarios editables
@@ -451,260 +507,311 @@ export default function MisPacientesTab({ professionalId, dateFrom, dateTo }: Mi
 
   if (loading) {
     return (
-      <div className="rounded-3xl border border-emerald-100 bg-white/70 backdrop-blur-sm p-8 shadow-sm">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-          <span className="ml-2 text-gray-600">Cargando indicadores de pacientes...</span>
+      <div className="space-y-8">
+        <div className="flex items-center justify-center h-96">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+            <span className="text-lg text-gray-600">Cargando análisis de mis pacientes...</span>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <Fragment>
-      {/* Resumen general */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-emerald-200 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <Users className="h-5 w-5 text-emerald-600" />
-            </div>
+    <div className="space-y-8">
+      <Fragment>
+        {/* Header con información del período */}
+        <div className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-teal-50 p-6 shadow-lg">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-gray-600">Total Pacientes</p>
-              <p className="text-xl font-semibold text-gray-900">{pacientes.length}</p>
+              <h2 className="text-2xl font-bold text-emerald-800 mb-2">Análisis de Mis Pacientes</h2>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>📊 Distribución demográfica, frecuencia de visitas y análisis geográfico</p>
+                <p>🔍 Período analizado: {dateFrom} hasta {dateTo}</p>
+              </div>
             </div>
-          </div>
-        </div>
-        
-        <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-emerald-200 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Calendar className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Promedio Visitas</p>
-              <p className="text-xl font-semibold text-gray-900">
-                {pacientes.length > 0 ? (pacientes.reduce((acc, p) => acc + p.totalVisitas, 0) / pacientes.length).toFixed(1) : '0'}
-              </p>
+            <div className="text-right">
+              <div className="text-sm text-gray-500 mb-1">Resumen de Análisis</div>
+              <div className="flex flex-wrap gap-1 justify-end">
+                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs">
+                  {pacientes.length} pacientes
+                </span>
+                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                  {geografiaData.length} ciudades
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-emerald-200 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <UserCheck className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Edad Promedio</p>
-              <p className="text-xl font-semibold text-gray-900">
-                {pacientes.length > 0 ? Math.round(pacientes.reduce((acc, p) => acc + calculateAge(new Date(p.fechaNacimiento)), 0) / pacientes.length) : '0'} años
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-emerald-200 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Ciudades</p>
-              <p className="text-xl font-semibold text-gray-900">{geografiaData.length}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Gráficos principales */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* 1. Distribución de Edades */}
-        <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-emerald-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Distribución por Edad</h2>
-              <p className="text-sm text-gray-500">Análisis de rangos etarios de pacientes</p>
-            </div>
-            <div className="flex gap-2">
-              <Select value={generoFilterEdad} onValueChange={setGeneroFilterEdad}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="Masculino">Masculino</SelectItem>
-                  <SelectItem value="Femenino">Femenino</SelectItem>
-                  <SelectItem value="Otro">Otro</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={() => setShowEdadEditor(true)}>
-                <Settings className="h-4 w-4 mr-1" /> Editar rangos
-              </Button>
-            </div>
-          </div>
+        {/* Métricas Principales */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <MetricCard
+            title="Total Pacientes"
+            value={pacientes.length}
+            subtitle="En el período seleccionado"
+            Icon={Users}
+            delay={0}
+          />
           
-          {edadDistribucionData.some(d => d.total > 0) ? (
-            <div className="h-80">
-              <Bar 
-                key={`edad-chart-${dateFrom}-${dateTo}-${generoFilterEdad}-${edadDistribucionData.map(d => d.total).join('-')}`}
-                data={edadChartData} 
-                options={chartOptions} 
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-80 text-gray-500">
-              No hay datos para mostrar
-            </div>
-          )}
-        </div>
-
-        {/* 2. Frecuencia de Visitas */}
-        <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-emerald-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Frecuencia de Visitas</h2>
-              <p className="text-sm text-gray-500">Pacientes por número de consultas</p>
-            </div>
-            <div className="flex gap-2">
-              <Select value={generoFilterVisitas} onValueChange={setGeneroFilterVisitas}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="Masculino">Masculino</SelectItem>
-                  <SelectItem value="Femenino">Femenino</SelectItem>
-                  <SelectItem value="Otro">Otro</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={() => setShowVisitasEditor(true)}>
-                <Settings className="h-4 w-4 mr-1" /> Editar
-              </Button>
-            </div>
-          </div>
+          <MetricCard
+            title="Promedio Visitas"
+            value={pacientes.length > 0 ? (pacientes.reduce((acc, p) => acc + p.totalVisitas, 0) / pacientes.length).toFixed(1) : '0'}
+            subtitle="Visitas por paciente"
+            Icon={Calendar}
+            delay={100}
+          />
           
-          {frecuenciaVisitasData.some(d => d.total > 0) ? (
-            <div className="h-80">
-              <Bar 
-                key={`visitas-chart-${dateFrom}-${dateTo}-${generoFilterVisitas}-${frecuenciaVisitasData.map(d => d.total).join('-')}`}
-                data={visitasChartData} 
-                options={chartOptions} 
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-80 text-gray-500">
-              No hay datos para mostrar
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Gráficos secundarios */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 3. Distribución por Edad y Género */}
-        <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-emerald-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Distribución por Edad y Género</h2>
-              <p className="text-sm text-gray-500">Composición demográfica por rangos etarios</p>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => setShowGeneroEdadEditor(true)}>
-              <Settings className="h-4 w-4 mr-1" /> Editar rangos
-            </Button>
-          </div>
+          <MetricCard
+            title="Edad Promedio"
+            value={`${pacientes.length > 0 ? Math.round(pacientes.reduce((acc, p) => acc + calculateAge(new Date(p.fechaNacimiento)), 0) / pacientes.length) : '0'} años`}
+            subtitle="Promedio de edad de pacientes"
+            Icon={Heart}
+            delay={200}
+          />
           
-          {generoEdadData.length > 0 ? (
-            <div className="h-80">
-              <Bar 
-                key={`genero-chart-${dateFrom}-${dateTo}-${generoEdadRanges.map(r => `${r.min}-${r.max}`).join('-')}-${generoEdadData.map(d => d.total).join('-')}`}
-                data={generoChartData} 
-                options={{...chartOptions, plugins: {...chartOptions.plugins, legend: {...chartOptions.plugins.legend, position: 'bottom' as const}}}} 
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-80 text-gray-500">
-              No hay datos para mostrar
-            </div>
-          )}
+          <MetricCard
+            title="Cobertura Geográfica"
+            value={`${geografiaData.length} ciudades`}
+            subtitle={geografiaData.length > 0 ? `Incluyendo ${geografiaData[0]?.ciudad}` : "Sin datos geográficos"}
+            Icon={MapPin}
+            delay={300}
+          />
         </div>
 
-        {/* 4. Distribución Geográfica */}
-        <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-emerald-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Distribución Geográfica</h2>
-              <p className="text-sm text-gray-500">Pacientes por ciudad</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={generoFilterGeografia} onValueChange={setGeneroFilterGeografia}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="Masculino">Masculino</SelectItem>
-                  <SelectItem value="Femenino">Femenino</SelectItem>
-                  <SelectItem value="Otro">Otro</SelectItem>
-                </SelectContent>
-              </Select>
-              <Filter className="h-4 w-4 text-gray-500" />
-              <Input
-                type="number"
-                value={maxCiudades}
-                onChange={(e) => setMaxCiudades(parseInt(e.target.value) || 10)}
-                className="w-20"
-                min="1"
-                max="50"
-              />
-              <span className="text-sm text-gray-500">ciudades</span>
-            </div>
-          </div>
-          
-          {geografiaData.length > 0 ? (
-            <div className="h-80">
-              <Bar 
-                key={`geografia-chart-${dateFrom}-${dateTo}-${generoFilterGeografia}-${geografiaData.map(d => d.total).join('-')}`}
-                data={geografiaChartData} 
-                options={{...chartOptions, plugins: {...chartOptions.plugins, legend: {display: false}}}} 
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-80 text-gray-500">
-              No hay datos geográficos disponibles
-            </div>
-          )}
+        {/* Gráficos principales */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 1. Distribución de Edades */}
+          <Card className="rounded-3xl border-emerald-100 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
+              <CardTitle className="flex items-center gap-3 text-emerald-800">
+                <div className="p-2 rounded-lg bg-emerald-100">
+                  <BarChart3 className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <div className="text-xl font-bold">Distribución por Edad</div>
+                  <div className="text-sm font-normal text-gray-600">
+                    Análisis de rangos etarios de pacientes
+                  </div>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex gap-2">
+                  <Select value={generoFilterEdad} onValueChange={setGeneroFilterEdad}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
+                      <SelectItem value="Masculino">Masculino</SelectItem>
+                      <SelectItem value="Femenino">Femenino</SelectItem>
+                      <SelectItem value="Otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={() => setShowEdadEditor(true)}>
+                    <Settings className="h-4 w-4 mr-1" /> Editar rangos
+                  </Button>
+                </div>
+              </div>
+              
+              {edadDistribucionData.some(d => d.total > 0) ? (
+                <div className="h-80">
+                  <Bar 
+                    key={`edad-chart-${dateFrom}-${dateTo}-${generoFilterEdad}-${edadDistribucionData.map(d => d.total).join('-')}`}
+                    data={edadChartData} 
+                    options={chartOptions} 
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-80 text-gray-500">
+                  No hay datos para mostrar
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 2. Frecuencia de Visitas */}
+          <Card className="rounded-3xl border-blue-100 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+              <CardTitle className="flex items-center gap-3 text-blue-800">
+                <div className="p-2 rounded-lg bg-blue-100">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-xl font-bold">Frecuencia de Visitas</div>
+                  <div className="text-sm font-normal text-gray-600">
+                    Análisis de recurrencia de pacientes
+                  </div>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex gap-2">
+                  <Select value={generoFilterVisitas} onValueChange={setGeneroFilterVisitas}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
+                      <SelectItem value="Masculino">Masculino</SelectItem>
+                      <SelectItem value="Femenino">Femenino</SelectItem>
+                      <SelectItem value="Otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={() => setShowVisitasEditor(true)}>
+                    <Settings className="h-4 w-4 mr-1" /> Editar rangos
+                  </Button>
+                </div>
+              </div>
+              
+              {frecuenciaVisitasData.some(d => d.total > 0) ? (
+                <div className="h-80">
+                  <Bar 
+                    key={`visitas-chart-${dateFrom}-${dateTo}-${generoFilterVisitas}-${frecuenciaVisitasData.map(d => d.total).join('-')}`}
+                    data={visitasChartData} 
+                    options={chartOptions} 
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-80 text-gray-500">
+                  No hay datos para mostrar
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      {/* Editores de rangos */}
-      {showEdadEditor && (
-        <RangeEditor
-          title="Editar Rangos de Edad"
-          ranges={edadRanges}
-          onRangesChange={setEdadRanges}
-          onClose={() => setShowEdadEditor(false)}
-        />
-      )}
+        {/* Gráficos secundarios */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 3. Distribución por Edad y Género */}
+          <Card className="rounded-3xl border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
+              <CardTitle className="flex items-center gap-3 text-purple-800">
+                <div className="p-2 rounded-lg bg-purple-100">
+                  <UserCheck className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <div className="text-xl font-bold">Distribución por Edad y Género</div>
+                  <div className="text-sm font-normal text-gray-600">
+                    Análisis demográfico combinado
+                  </div>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div></div>
+                <Button variant="outline" size="sm" onClick={() => setShowGeneroEdadEditor(true)}>
+                  <Settings className="h-4 w-4 mr-1" /> Editar rangos
+                </Button>
+              </div>
+              
+              {generoEdadData.length > 0 ? (
+                <div className="h-80">
+                  <Bar 
+                    key={`genero-chart-${dateFrom}-${dateTo}-${generoEdadRanges.map(r => `${r.min}-${r.max}`).join('-')}-${generoEdadData.map(d => d.total).join('-')}`}
+                    data={generoChartData} 
+                    options={{...chartOptions, plugins: {...chartOptions.plugins, legend: {...chartOptions.plugins.legend, position: 'bottom' as const}}}} 
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-80 text-gray-500">
+                  No hay datos para mostrar
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-      {showVisitasEditor && (
-        <RangeEditor
-          title="Editar Rangos de Visitas"
-          ranges={visitasRanges}
-          onRangesChange={setVisitasRanges}
-          onClose={() => setShowVisitasEditor(false)}
-        />
-      )}
+          {/* 4. Distribución Geográfica */}
+          <Card className="rounded-3xl border-orange-100 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50 border-b border-orange-100">
+              <CardTitle className="flex items-center gap-3 text-orange-800">
+                <div className="p-2 rounded-lg bg-orange-100">
+                  <MapPin className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <div className="text-xl font-bold">Distribución Geográfica</div>
+                  <div className="text-sm font-normal text-gray-600">
+                    Análisis por ubicación de pacientes
+                  </div>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex gap-2">
+                  <Select value={generoFilterGeografia} onValueChange={setGeneroFilterGeografia}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
+                      <SelectItem value="Masculino">Masculino</SelectItem>
+                      <SelectItem value="Femenino">Femenino</SelectItem>
+                      <SelectItem value="Otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    value={maxCiudades}
+                    onChange={(e) => setMaxCiudades(parseInt(e.target.value) || 10)}
+                    className="w-20"
+                    min="1"
+                    max="50"
+                  />
+                </div>
+              </div>
+              
+              {geografiaData.length > 0 ? (
+                <div className="h-80">
+                  <Bar 
+                    key={`geografia-chart-${dateFrom}-${dateTo}-${generoFilterGeografia}-${maxCiudades}-${geografiaData.map(d => d.total).join('-')}`}
+                    data={geografiaChartData} 
+                    options={chartOptions} 
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-80 text-gray-500">
+                  No hay datos para mostrar
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-      {showGeneroEdadEditor && (
-        <RangeEditor
-          title="Editar Rangos de Edad y Género"
-          ranges={generoEdadRanges}
-          onRangesChange={setGeneroEdadRanges}
-          onClose={() => setShowGeneroEdadEditor(false)}
-          maxRanges={3}
-        />
-      )}
-    </Fragment>
+        {/* Editores de rangos */}
+        {showEdadEditor && (
+          <RangeEditor
+            title="Editar Rangos de Edad"
+            ranges={edadRanges}
+            onRangesChange={setEdadRanges}
+            onClose={() => setShowEdadEditor(false)}
+          />
+        )}
+
+        {showVisitasEditor && (
+          <RangeEditor
+            title="Editar Rangos de Visitas"
+            ranges={visitasRanges}
+            onRangesChange={setVisitasRanges}
+            onClose={() => setShowVisitasEditor(false)}
+          />
+        )}
+
+        {showGeneroEdadEditor && (
+          <RangeEditor
+            title="Editar Rangos de Edad y Género"
+            ranges={generoEdadRanges}
+            onRangesChange={setGeneroEdadRanges}
+            onClose={() => setShowGeneroEdadEditor(false)}
+            maxRanges={3}
+          />
+        )}
+      </Fragment>
+    </div>
   )
 }

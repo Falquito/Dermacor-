@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, ComponentType, SVGProps } from 'react';
-import { Filter, Loader2, Calendar, TrendingUp, Clock, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Filter, Loader2 } from 'lucide-react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement } from 'chart.js';
 import { AppointmentStatus } from '@prisma/client';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -57,54 +57,17 @@ const getDefaultDateRange = () => {
   return { from, to: today };
 };
 
-// KPI Card Component (similar to gerencia)
-type KpiCardProps = {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
-  accent?: string;
-};
 
-const KpiCard = ({ title, value, subtitle, Icon, accent = "bg-blue-50" }: KpiCardProps) => {
-  const gradientMap: Record<string, string> = {
-    "bg-blue-50": "from-blue-500 to-blue-600",
-    "bg-emerald-50": "from-emerald-500 to-emerald-600",
-    "bg-red-50": "from-red-500 to-red-600",
-    "bg-purple-50": "from-purple-500 to-purple-600"
-  };
-  
-  const gradient = gradientMap[accent] || "from-gray-500 to-gray-600";
-
-  return (
-    <div className="rounded-xl border border-emerald-100 bg-white/70 backdrop-blur-sm p-3.5 shadow-sm hover:shadow-md transition-all duration-200 hover:border-emerald-200">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">{title}</p>
-          <p className="text-lg font-bold text-gray-900 truncate">{value}</p>
-          {subtitle && (
-            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{subtitle}</p>
-          )}
-        </div>
-        <div className={`h-9 w-9 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center shadow-sm shrink-0`}>
-          <Icon className="h-4 w-4 text-white" />
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export default function ProfesionalPage() {
   const [stats, setStats] = useState<ProfessionalStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
-  const [hiddenDatasets, setHiddenDatasets] = useState<Set<number>>(new Set());
   const [refreshKey, setRefreshKey] = useState(0);
   const [allTime, setAllTime] = useState(false);
   const [activeTab, setActiveTab] = useState<'practice' | 'patients'>('practice');
   const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
-  const chartRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const currentYear = new Date().getFullYear();
 
   // Initialize default dates (last 30 days)
@@ -212,33 +175,6 @@ export default function ProfesionalPage() {
 
     fetchStats();
   }, [dateFrom, dateTo, refreshKey, allTime]);
-
-  // Funciones para manejar la leyenda interactiva del gráfico
-  const toggleDataset = (index: number) => {
-    const newHiddenDatasets = new Set(hiddenDatasets);
-    if (newHiddenDatasets.has(index)) {
-      newHiddenDatasets.delete(index);
-    } else {
-      newHiddenDatasets.add(index);
-    }
-    setHiddenDatasets(newHiddenDatasets);
-  };
-
-  const handleLegendHover = (index: number) => {
-    if (chartRef.current) {
-      const chart = chartRef.current;
-      chart.setActiveElements([{ datasetIndex: 0, index }]);
-      chart.update('none');
-    }
-  };
-
-  const handleLegendLeave = () => {
-    if (chartRef.current) {
-      const chart = chartRef.current;
-      chart.setActiveElements([]);
-      chart.update('none');
-    }
-  };
 
   if (loading) {
     return (
@@ -406,38 +342,7 @@ export default function ProfesionalPage() {
           </div>
         </div>
 
-        {/* Key metrics cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard 
-            title="Total de Turnos" 
-            value={stats?.totalAppointments || 0} 
-            subtitle={`Promedio diario: ${stats?.averageDaily || 0}`}
-            Icon={Calendar} 
-            accent="bg-blue-50" 
-          />
-          <KpiCard 
-            title="Tasa de Completado" 
-            value={`${stats?.completionRate || 0}%`}
-            subtitle="Turnos completados exitosamente"
-            Icon={TrendingUp} 
-            accent="bg-emerald-50" 
-          />
-          <KpiCard 
-            title="Tasa de Cancelación" 
-            value={`${stats?.cancellationRate || 0}%`}
-            subtitle="Cancelados y no asistieron"
-            Icon={Clock} 
-            accent="bg-red-50" 
-          />
-          <KpiCard 
-            title="Pacientes Únicos" 
-            value={stats?.recentAppointments ? new Set(stats.recentAppointments.map(a => a.paciente)).size : 0}
-            subtitle="En el período seleccionado"
-            Icon={Users} 
-            accent="bg-purple-50" 
-          />
-        </div>
-
+        
         {/* Tabs navigation */}
         <div className="rounded-2xl border border-emerald-100 bg-white p-2 shadow-sm">
           <div className="flex gap-2">
@@ -468,10 +373,6 @@ export default function ProfesionalPage() {
         {activeTab === 'practice' && (
           <PracticaClinicaTab
             stats={stats}
-            hiddenDatasets={hiddenDatasets}
-            onToggleDataset={toggleDataset}
-            onLegendHover={handleLegendHover}
-            onLegendLeave={handleLegendLeave}
           />
         )}
 

@@ -17,8 +17,7 @@ import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
   Calendar, 
-  Users, 
-  Target,
+  Users,
   Zap,
   Filter,
   RefreshCw,
@@ -168,19 +167,23 @@ const MetricCard = ({ title, value, change, subtitle, Icon, delay = 0 }: MetricC
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-4">
             <Icon className="h-5 w-5 text-emerald-600" />
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{title}</h3>
           </div>
-          <div className="space-y-2">
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            {change !== undefined && (
-              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${changeBg} ${changeColor}`}>
-                {change > 0 ? '↗' : change < 0 ? '↘' : '→'} {Math.abs(change).toFixed(1)}%
-              </div>
-            )}
+          
+          <div className="space-y-3">
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-bold text-gray-900">{value}</p>
+              {change !== undefined && (
+                <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${changeBg} ${changeColor}`}>
+                  {change > 0 ? '↗' : change < 0 ? '↘' : '→'} {Math.abs(change).toFixed(1)}%
+                </div>
+              )}
+            </div>
+            
             {subtitle && (
-              <p className="text-sm text-gray-600">{subtitle}</p>
+              <p className="text-sm text-gray-600 font-medium">{subtitle}</p>
             )}
           </div>
         </div>
@@ -714,77 +717,7 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
         </div>
       </div>
 
-      {/* Métricas Principales */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <MetricCard
-          title="Variación de Consultas"
-          value={`${estadisticasResumen.tendenciaMensual > 0 ? '+' : ''}${estadisticasResumen.tendenciaMensual.toFixed(1)}%`}
-          change={estadisticasResumen.tendenciaMensual}
-          subtitle={`Período: ${filtros.evolucionTemporal.periodo}`}
-          Icon={TrendingUp}
-          delay={0}
-        />
-        
-        <MetricCard
-          title="Pacientes Nuevos"
-          value={estadisticasResumen.crecimientoPacientesUltimoMes}
-          subtitle={`Crecimiento mensual`}
-          Icon={Users}
-          delay={100}
-        />
-        
-        <MetricCard
-          title="Consultas Resueltas"
-          value={`${(() => {
-            const completados = turnosPorMes?.reduce((sum, mes) => sum + mes.completados, 0) || 0;
-            const cancelados = turnosPorMes?.reduce((sum, mes) => sum + mes.cancelados, 0) || 0;
-            const total = turnosPorMes?.reduce((sum, mes) => sum + mes.total, 0) || 0;
-            return total > 0 ? (((completados + cancelados) / total) * 100).toFixed(1) : '0';
-          })()}%`}
-          subtitle={`Del total de consultas`}
-          Icon={Target}
-          delay={200}
-        />
 
-        <MetricCard
-          title="Saturación de Agenda"
-          value={`${(() => {
-            const totalConsultas = turnosPorMes?.reduce((sum, mes) => sum + mes.total, 0) || 0;
-            const mesesConDatos = turnosPorMes?.length || 1;
-            const promedioMensual = totalConsultas / mesesConDatos;
-            // Asumiendo capacidad máxima promedio de 200 consultas por mes
-            const capacidadMaxima = 200;
-            return ((promedioMensual / capacidadMaxima) * 100).toFixed(1);
-          })()}%`}
-          subtitle="Uso de capacidad disponible"
-          Icon={Zap}
-          delay={300}
-        />
-      </div>
-
-      {/* Proyección con explicación */}
-      <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-full bg-emerald-100">
-              <Zap className="h-6 w-6 text-emerald-600" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-emerald-800">Proyección Modular</h3>
-              <p className="text-sm text-gray-600">Análisis predictivo personalizable</p>
-            </div>
-          </div>
-          <div className="text-right lg:text-center">
-            <div className="text-3xl font-bold text-emerald-700 mb-1">
-              {estadisticasResumen.prediccionProximoMes > 0 ? '+' : ''}
-              {estadisticasResumen.prediccionProximoMes.toFixed(1)}%
-            </div>
-            <div className="text-xs text-gray-500 max-w-md" title={proyeccionExplicacion}>
-              Para {filtros.evolucionTemporal.periodo} | {filtros.evolucionTemporal.profesional === 'todos' ? 'Global' : 'Específico'}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Gráficos principales modulares */}
       <div className="space-y-8">

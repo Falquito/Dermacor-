@@ -1,13 +1,12 @@
-version: "3.9"
 services:
   db:
-    image: postgres:16
-    container_name: carelink_db
+    image: postgres:15
+    container_name: dermacor
     restart: unless-stopped
     environment:
-      POSTGRES_USER: carelink
-      POSTGRES_PASSWORD: carelink
-      POSTGRES_DB: carelink
+      POSTGRES_USER: dermacor
+      POSTGRES_PASSWORD: dermacor
+      POSTGRES_DB: dermacor
     ports:
       - "5432:5432"
     volumes:

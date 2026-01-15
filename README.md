@@ -1,15 +1,11 @@
-# 🏥 CareLink - Sistema de Gestión de Turnos Clínicos
+# 🏥 DermaCor - Sistema de Gestión de Pacientes
 
-Sistema académico para la gestión integral de turnos médicos en clínicas, desarrollado por un equipo de 7 estudiantes como proyecto universitario.
+Sistema para la gestión integral de pacientes en el centro dermatologico, desarrollado por un equipo de 4 personas.
 
 ## 📋 Descripción del Proyecto
 
-CareLink es una aplicación web moderna que permite:
-- **Gestión de Pacientes**: Registro, historial y datos médicos
-- **Agenda Médica**: Calendario de turnos y disponibilidad de médicos  
-- **Sistema de Turnos**: Reserva, confirmación y seguimiento de citas
-- **Panel Administrativo**: Gestión de usuarios, reportes y configuración
-- **Notificaciones**: Recordatorios por email y SMS (futuro)
+Dermacor es una aplicación web moderna que permite:
+- **Gestión de Pacientes**: Registro, historial y datos médicos.
 
 ## 🚀 Tecnologías
 
@@ -31,12 +27,12 @@ CareLink es una aplicación web moderna que permite:
 1. Clona el repositorio:
 ```bash
 git clone <url-del-repositorio>
-cd carelink-clinic-management
+cd Dermacor-
 ```
 
 2. Instala las dependencias:
 ```bash
-npm install
+npm i
 ```
 
 3. Configura las variables de entorno:
@@ -68,11 +64,6 @@ npm run dev
 
 La aplicación estará disponible en `http://localhost:3000`.
 
-Credenciales de prueba (seed):
-
-- Profesional: ana.cardiologa@carelink.com / admin1234
-- Mesa de entrada: mesa@carelink.com / admin1234
-- Gerente: gerente@carelink.com / admin1234
 
 
 ## 📁 Scripts disponibles
@@ -102,16 +93,9 @@ carelink/
 ├── public/                  # Archivos estáticos
 └── docker-compose.yml       # Configuración de Docker
 ```
+## Licencia y Derechos de Uso
 
-## 🤝 Contribuir
+**Copyright © 2026 Centro Dermatologico. Todos los derechos reservados.**
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Agrega los cambios que haras commit (`git add .` (el punto agrega todos los cambios))
-4. Commit tus cambios (`git commit -m 'Agrega nueva funcionalidad'`)
-5. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-6. Abre un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT.
+Este software es propiedad exclusiva de Centro Dermatologico.
+Queda prohibida su distribución, copia, modificación o uso por terceros sin autorización expresa y por escrito del titular..

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
   title: "Dermacor",
@@ -16,8 +17,8 @@ export default function RootLayout({
     <html lang="es">
       <body className="antialiased">
         <Providers>
-          <header>Hola</header>
-          {children}
+          <Header />
+          <main className="max-w-7xl mx-auto">{children}</main>
         </Providers>
       </body>
     </html>

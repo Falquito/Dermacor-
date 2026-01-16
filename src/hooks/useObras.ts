@@ -12,7 +12,7 @@ export function useObraSocial() {
             const data = await fetchObrasApi()
             setObras(data)
             setError(null)
-        } catch (err) {
+        } catch {
             setError('Error al cargar las obras sociales')
         } finally {
             setLoading(false)

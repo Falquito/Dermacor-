@@ -1,4 +1,5 @@
-import { getCurrentUser, signOut } from '@/lib/auth'
+import { auth } from '@/lib/auth'
+import { signOut } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import { AlertCircle, Home, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -7,8 +8,10 @@ export const dynamic = 'force-dynamic'
 
 async function signOutAction() {
   'use server'
-  await signOut()
-  redirect('/login')
+  const res = await signOut({ redirect: false })
+  if (res) {
+    redirect('/')
+  }
 }
 
 async function goHomeAction() {
@@ -17,11 +20,11 @@ async function goHomeAction() {
 }
 
 export default async function ErrorPage() {
-  const user = await getCurrentUser()
+  const session = await auth()
   
   // If user is not logged in, redirect to login
-  if (!user) {
-    redirect('/login')
+  if (!session) {
+    redirect('/auth/login')
   }
 
   const roleLabels = {
@@ -72,10 +75,10 @@ export default async function ErrorPage() {
               {/* User Info */}
               <div className="text-center">
                 <p className="text-gray-700 mb-2">
-                  <span className="font-medium">Usuario:</span> {user.name || user.email}
+                  <span className="font-medium">Usuario:</span> {session.user.name || session.user.email}
                 </p>
                 <p className="text-gray-700">
-                  <span className="font-medium">Email:</span> {user.email}
+                  <span className="font-medium">Email:</span> {session.user.email}
                 </p>
               </div>
 
@@ -85,15 +88,12 @@ export default async function ErrorPage() {
                   <span className="font-medium">Sus roles:</span>
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
-                  {user.roles.length > 0 ? (
-                    user.roles.map(role => (
-                      <span 
-                        key={role}
-                        className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800 border"
-                      >
-                        {roleLabels[role]}
-                      </span>
-                    ))
+                  {session.user?.role ? (
+                    <span 
+                      className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800 border"
+                    >
+                      {roleLabels[session.user.role as keyof typeof roleLabels] || session.user.role}
+                    </span>
                   ) : (
                     <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-orange-100 text-orange-800 border border-orange-200">
                       Sin roles asignados
@@ -104,7 +104,7 @@ export default async function ErrorPage() {
 
               {/* Message */}
               <div className="text-center text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border">
-                {user.roles.length === 0 ? (
+                {!session.user?.role ? (
                   <p>
                     Su cuenta no tiene ningún rol asignado. Por favor, contacte con el administrador del sistema para que le asigne los permisos necesarios.
                   </p>

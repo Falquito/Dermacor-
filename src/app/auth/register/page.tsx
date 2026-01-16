@@ -93,7 +93,7 @@ export default function RegisterPage() {
 
       // Redirigir al login con mensaje
       router.push('/auth/login?registered=true');
-    } catch (err) {
+    } catch {
       setError('Error al conectar con el servidor');
       setLoading(false);
     }

@@ -1,5 +1,3 @@
-import { AppointmentStatus, TipoConsulta } from '@prisma/client'
-
 // Tipo para los datos del formulario de turno
 export interface AppointmentFormData {
   // Datos del paciente
@@ -25,7 +23,7 @@ export interface AppointmentFormData {
   observaciones?: string
   
   // Datos de obra social
-  tipoConsulta: TipoConsulta
+  tipoConsulta: string
   obraSocialId?: string
   numeroAfiliado?: string
   copago?: number
@@ -50,7 +48,7 @@ export interface AppointmentSubmitData {
   duracion: number
   motivo?: string
   observaciones?: string
-  tipoConsulta: TipoConsulta
+  tipoConsulta: string
   obraSocialId?: string
   numeroAfiliado?: string
   copago?: number
@@ -93,8 +91,8 @@ export interface TurnoCompleto {
   duracion: number
   motivo?: string
   observaciones?: string
-  estado: AppointmentStatus
-  tipoConsulta: TipoConsulta
+  estado: string
+  tipoConsulta: string
   numeroAfiliado?: string
   copago?: number
   autorizacion?: string

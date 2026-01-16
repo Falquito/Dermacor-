@@ -8,7 +8,7 @@ export async function GET() {
       orderBy: { idObraSocial: 'desc' }
     })
     return NextResponse.json(obras)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Error al obtener datos' }, { status: 500 })
   }
 }
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json(nuevaObra, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Error al crear' }, { status: 500 })
   }
 }

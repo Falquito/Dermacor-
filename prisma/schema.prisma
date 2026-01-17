@@ -21,7 +21,7 @@ model Paciente {
 
   // Relaciones
   consultas         Consultas[]
-  pacienteXObra     PacienteXObra[]
+  
 }
 
 model ObraSocial {
@@ -32,7 +32,7 @@ model ObraSocial {
 
   // Relaciones
   consultas     Consultas[]
-  pacienteXObra PacienteXObra[]
+  
 }
 
 model Consultas {
@@ -41,6 +41,9 @@ model Consultas {
   diagnosticoConsulta String?
   tratamientoConsulta String?
   fechaHoraConsulta   DateTime @default(now())
+  nroAfiliado        String?
+  tipoConsulta       String?
+  montoConsulta      Float?
 
   // FK
   idPaciente    Int
@@ -54,23 +57,6 @@ model Consultas {
   @@index([idObraSocial])
 }
 
-model PacienteXObra {
-  idPacientexObra Int @id @default(autoincrement())
-
-  nroAfiliado     String?
-
-  // FK
-  idPaciente   Int
-  idObraSocial Int
-
-  // Relaciones
-  paciente    Paciente   @relation(fields: [idPaciente], references: [idPaciente], onDelete: Cascade)
-  obraSocial  ObraSocial @relation(fields: [idObraSocial], references: [idObraSocial], onDelete: Cascade)
-
-  // Evita duplicados (un mismo paciente no se repite con la misma obra social)
-  @@unique([idPaciente, idObraSocial])
-  @@index([idObraSocial])
-}
 model Account {
   id                 String  @id @default(cuid())
   userId             String

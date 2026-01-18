@@ -9,12 +9,31 @@ import SkeletonListPacientes from "@/components/pacientes/skeletonListPacientes"
 import EmptyStatePacientes from "@/components/pacientes/emptyStatePacientes";
 import CreatePacienteModal from "@/components/pacientes/createPacienteModal";
 import PacientesPagination from "@/components/pacientes/pacientesPagination";
+import NotifySuccessPaciente from "@/components/pacientes/notifySuccessPaciente";
 
 import { usePacientesQuery } from "@/hooks/usePacienteQuery";
 
+type SuccessToast = {
+  open: boolean;
+  title: string;
+  description: string;
+};
 
 export default function PacientePage() {
   const [q, setQ] = useState("");
+
+  const [successToast, setSuccessToast] = useState<SuccessToast>({
+    open: false,
+    title: "",
+    description: "",
+  });
+
+  const showSuccess = (title: string, description: string) => {
+    setSuccessToast({ open: true, title, description });
+    setTimeout(() => {
+      setSuccessToast((prev) => ({ ...prev, open: false }));
+    }, 2000);
+  };
 
   const {
     pacientes,
@@ -32,11 +51,21 @@ export default function PacientePage() {
 
   return (
     <div className="p-6 md:p-8 space-y-8 bg-slate-50/50 min-h-screen">
+      <NotifySuccessPaciente
+        open={successToast.open}
+        title={successToast.title}
+        description={successToast.description}
+      />
+
       <HeaderPacientes />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <SearcherPacientes value={q} onChange={setQ} disabled={loading} />
-        <CreatePacienteModal onCreated={refrescar} />
+
+        <CreatePacienteModal
+          onCreated={refrescar}
+          onSuccess={() => showSuccess("Éxito", "El paciente fue creado correctamente.")}
+        />
       </div>
 
       {loading ? (
@@ -53,6 +82,9 @@ export default function PacientePage() {
             pacientes={pacientes}
             onVerHistoria={(id) => console.log("Ver historia", id)}
             onChanged={refrescar}
+            onEditSuccess={() =>
+              showSuccess("Éxito", "El paciente fue actualizado correctamente.")
+            }
           />
 
           {totalPages > 1 ? (
@@ -63,7 +95,7 @@ export default function PacientePage() {
               onPageChange={setPage}
               disabled={loading}
             />
-          ) : null} 
+          ) : null}
         </>
       )}
     </div>

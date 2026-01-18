@@ -7,12 +7,15 @@ type ListaPacientesProps = {
   pacientes: PacienteConObras[];
   onVerHistoria?: (idPaciente: number) => void;
   onChanged?: () => void;
+
+  onEditSuccess?: () => void;
 };
 
 export default function ListaPacientes({
   pacientes,
   onVerHistoria,
   onChanged,
+  onEditSuccess,
 }: ListaPacientesProps) {
   if (!pacientes || pacientes.length === 0) {
     return (
@@ -30,6 +33,7 @@ export default function ListaPacientes({
           paciente={p}
           onVerHistoria={onVerHistoria}
           onChanged={onChanged}
+          onEditSuccess={onEditSuccess}
         />
       ))}
     </div>

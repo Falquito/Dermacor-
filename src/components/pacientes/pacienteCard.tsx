@@ -41,12 +41,15 @@ type PacienteCardProps = {
   paciente: PacienteConObras;
   onVerHistoria?: (idPaciente: number) => void;
   onChanged?: () => void;
+
+  onEditSuccess?: () => void;
 };
 
 export default function PacienteCard({
   paciente,
   onVerHistoria,
   onChanged,
+  onEditSuccess,
 }: PacienteCardProps) {
   const {
     idPaciente,
@@ -63,11 +66,8 @@ export default function PacienteCard({
   const [openConfirmEstado, setOpenConfirmEstado] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
-  // ✅ Obra social actual = obra social de la última consulta
   const ultimaConsulta = consultas?.[0];
-  const obraSocialActual =
-    ultimaConsulta?.obraSocial?.nombreObraSocial ?? null;
-
+  const obraSocialActual = ultimaConsulta?.obraSocial?.nombreObraSocial ?? null;
   const ultimaConsultaIso = ultimaConsulta?.fechaHoraConsulta ?? null;
 
   const labelEstadoAction = estadoPaciente ? "Dar de baja" : "Dar de alta";
@@ -77,15 +77,12 @@ export default function PacienteCard({
     <>
       <Card className="rounded-xl border-muted/60">
         <CardContent className="p-6">
-          {/* Header */}
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
               <h3 className="text-lg font-semibold text-foreground">
                 {nombrePaciente} {apellidoPaciente}
               </h3>
-              <p className="text-sm text-muted-foreground">
-                DNI: {dniPaciente}
-              </p>
+              <p className="text-sm text-muted-foreground">DNI: {dniPaciente}</p>
             </div>
 
             <div className="flex flex-col items-end gap-2">
@@ -129,9 +126,7 @@ export default function PacienteCard({
             </div>
           </div>
 
-          {/* Info */}
           <div className="mt-5 space-y-3 text-sm">
-            {/* Obra social */}
             <div className="flex items-center gap-3">
               <CreditCard className="h-4 w-4 text-muted-foreground" />
               {obraSocialActual ? (
@@ -139,13 +134,10 @@ export default function PacienteCard({
                   {obraSocialActual}
                 </Badge>
               ) : (
-                <span className="text-muted-foreground">
-                  Sin obra social
-                </span>
+                <span className="text-muted-foreground">Sin obra social</span>
               )}
             </div>
 
-            {/* Teléfono */}
             <div className="flex items-center gap-3">
               <Phone className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">
@@ -153,7 +145,6 @@ export default function PacienteCard({
               </span>
             </div>
 
-            {/* Domicilio */}
             <div className="flex items-center gap-3">
               <MapPin className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">
@@ -164,10 +155,8 @@ export default function PacienteCard({
 
           <Separator className="my-5" />
 
-          {/* Última consulta */}
           <p className="text-xs text-muted-foreground">
-            Última consulta:{" "}
-            {ultimaConsultaIso ? formatFechaAR(ultimaConsultaIso) : "—"}
+            Última consulta: {ultimaConsultaIso ? formatFechaAR(ultimaConsultaIso) : "—"}
           </p>
 
           <Button
@@ -179,19 +168,17 @@ export default function PacienteCard({
         </CardContent>
       </Card>
 
-      {/* Modal editar */}
       <EditPacienteModal
         open={openEdit}
         onOpenChange={setOpenEdit}
         paciente={paciente}
-        onSaved={() => onChanged?.()}
+        onSaved={() => {
+          onChanged?.();
+          onEditSuccess?.(); // ✅ toast de edición OK
+        }}
       />
 
-      {/* Confirm alta/baja */}
-      <AlertDialog
-        open={openConfirmEstado}
-        onOpenChange={setOpenConfirmEstado}
-      >
+      <AlertDialog open={openConfirmEstado} onOpenChange={setOpenConfirmEstado}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{labelEstadoAction}</AlertDialogTitle>
@@ -203,9 +190,7 @@ export default function PacienteCard({
           </AlertDialogHeader>
 
           <AlertDialogFooter className="flex gap-4 sm:gap-6">
-            <AlertDialogCancel disabled={isToggling}>
-              Cancelar
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={isToggling}>Cancelar</AlertDialogCancel>
 
             <AlertDialogAction
               disabled={isToggling}

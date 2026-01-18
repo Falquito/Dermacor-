@@ -16,9 +16,10 @@ import { Loader2 } from "lucide-react";
 
 type Props = {
   onCreated?: () => void;
+  onSuccess?: () => void;
 };
 
-export default function CreatePacienteModal({ onCreated }: Props) {
+export default function CreatePacienteModal({ onCreated, onSuccess }: Props) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,18 +64,20 @@ export default function CreatePacienteModal({ onCreated }: Props) {
 
                 onCreated?.();
                 setOpen(false);
+
+                onSuccess?.();
               } catch (e: unknown) {
                 const error = e as { message?: string };
-                const msg = error?.message ? String(error.message) : "Error al crear paciente";
+                const msg = error?.message
+                  ? String(error.message)
+                  : "Error al crear paciente";
 
                 if (msg.toLowerCase().includes("dni")) {
                   setDniServerError(msg);
-
                   throw e;
                 }
 
                 setDniServerError("Error al crear paciente");
-
                 throw e;
               } finally {
                 setIsLoading(false);

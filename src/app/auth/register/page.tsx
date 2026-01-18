@@ -5,6 +5,29 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
+// Reutilizamos el patrón de ondas (o puedes importarlo si lo extraes a un componente)
+const WavePattern = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <svg
+      className="absolute w-[200%] h-[200%] top-[-50%] left-[-50%] animate-[spin_50s_linear_infinite] opacity-30"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+       <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.2" className="text-cyan-300/30" />
+       <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeWidth="0.3" className="text-cyan-200/40" />
+       <circle cx="50" cy="50" r="25" fill="none" stroke="currentColor" strokeWidth="0.4" className="text-white/20" />
+       <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.5"
+        d="M50 50 m-40 0 a 40 40 0 1 0 80 0 a 40 40 0 1 0 -80 0"
+        className="text-cyan-400/20"
+      />
+    </svg>
+    <div className="absolute inset-0 bg-gradient-to-bl from-cyan-800/90 via-cyan-600/80 to-cyan-500/50" />
+  </div>
+);
+
 export default function RegisterPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -18,32 +41,26 @@ export default function RegisterPage() {
   });
 
   useEffect(() => {
-    // Si ya está autenticado, redirigir a obras-sociales
     if (status === "authenticated" && session) {
       router.push("/obras-sociales");
     }
   }, [status, session, router]);
 
-  // Mostrar loading mientras se verifica la sesión
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-cyan-600 font-medium">Cargando...</div>
+       <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-12 w-12 rounded-full border-4 border-cyan-200 border-t-cyan-600 animate-spin mb-4"></div>
+        </div>
       </div>
     );
   }
 
-  // Si ya está autenticado, no mostrar el formulario
-  if (status === "authenticated") {
-    return null;
-  }
+  if (status === "authenticated") return null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -51,7 +68,6 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
-    // Validaciones
     if (!formData.email || !formData.password || !formData.confirmPassword) {
       setError('Todos los campos son requeridos');
       setLoading(false);
@@ -73,9 +89,7 @@ export default function RegisterPage() {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -90,8 +104,6 @@ export default function RegisterPage() {
         setLoading(false);
         return;
       }
-
-      // Redirigir al login con mensaje
       router.push('/auth/login?registered=true');
     } catch {
       setError('Error al conectar con el servidor');
@@ -100,110 +112,140 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-xs sm:max-w-sm space-y-6 sm:space-y-8">
-        <div>
-          <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-extrabold text-cyan-900">
-            Crear cuenta
-          </h2>
-          <p className="mt-2 text-center text-xs sm:text-sm text-cyan-700">
-            O{' '}
-            <Link
-              href="/auth/login"
-              className="font-medium text-cyan-600 hover:text-cyan-700"
-            >
-              inicia sesión si ya tienes cuenta
-            </Link>
-          </p>
-        </div>
+    <div className="min-h-screen flex w-full bg-white overflow-hidden">
+      
+      {/* Left side - Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-20 py-12 relative z-10">
+        <div className="w-full max-w-sm mx-auto animate-[fadeIn_0.6s_ease-out]">
+          
+          <div className="mb-10 flex items-center gap-2">
+            <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold">D</div>
+            <span className="text-xl font-bold text-gray-800 tracking-tight">Dermacor</span>
+          </div>
 
-        <form className="mt-6 sm:mt-8 space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+          <div className="mb-8">
+            <h2 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">
+              Crear una cuenta
+            </h2>
+            <p className="text-gray-500">
+              Empieza a gestionar tu consultorio hoy mismo.
+            </p>
+          </div>
+
           {error && (
-            <div className="rounded-md bg-red-50 p-3 sm:p-4 border border-red-200">
-              <div className="flex">
-                <div className="ml-2 sm:ml-3">
-                  <p className="text-xs sm:text-sm text-red-700 font-medium">{error}</p>
-                </div>
-              </div>
+            <div className="mb-6 rounded-xl bg-red-50 p-4 border border-red-100 flex items-center gap-3">
+               <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+               </svg>
+              <p className="text-sm text-red-600 font-medium">{error}</p>
             </div>
           )}
 
-          <div className="rounded-md shadow-sm -space-y-px">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="name" className="sr-only">
-                Nombre (Opcional)
+              <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">
+                Nombre completo <span className="text-gray-400 font-normal">(Opcional)</span>
               </label>
               <input
                 id="name"
                 name="name"
                 type="text"
-                autoComplete="name"
-                placeholder="Nombre completo (opcional)"
+                placeholder="Dr. Juan Pérez"
                 value={formData.name}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 sm:px-4 py-2 sm:py-3 border border-cyan-300 placeholder-cyan-400 text-gray-900 rounded-t-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 text-sm sm:text-base"
+                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:bg-white transition-all duration-200"
               />
             </div>
+
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">
+                Correo electrónico
               </label>
               <input
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
                 required
-                placeholder="Correo electrónico"
+                placeholder="tu@correo.com"
                 value={formData.email}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 sm:px-4 py-2 sm:py-3 border border-cyan-300 placeholder-cyan-400 text-gray-900 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 text-sm sm:text-base"
+                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:bg-white transition-all duration-200"
               />
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Contraseña
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                placeholder="Contraseña"
-                value={formData.password}
-                onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 sm:px-4 py-2 sm:py-3 border border-cyan-300 placeholder-cyan-400 text-gray-900 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 text-sm sm:text-base"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="sr-only">
-                Confirmar contraseña
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                placeholder="Confirmar contraseña"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 sm:px-4 py-2 sm:py-3 border border-cyan-300 placeholder-cyan-400 text-gray-900 rounded-b-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 text-sm sm:text-base"
-              />
-            </div>
-          </div>
 
-          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">
+                  Contraseña
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  placeholder="Mín. 6 caracteres"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:bg-white transition-all duration-200"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">
+                  Confirmar
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  placeholder="Repetir contraseña"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:bg-white transition-all duration-200"
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 sm:py-3 px-4 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-4 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 active:scale-[0.99] text-white font-bold text-lg shadow-lg shadow-cyan-500/30 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
             >
-              {loading ? 'Registrando...' : 'Registrarse'}
+              {loading ? 'Creando cuenta...' : 'Continuar'}
             </button>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+            <p className="text-gray-500 text-sm">
+              ¿Ya tienes cuenta?{' '}
+              <Link
+                href="/auth/login"
+                className="font-bold text-cyan-600 hover:text-cyan-800 transition-colors"
+              >
+                Inicia sesión aquí
+              </Link>
+            </p>
           </div>
-        </form>
+        </div>
+      </div>
+
+      {/* Right side - Gradient Background */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-cyan-900 items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-950 via-cyan-800 to-cyan-600 opacity-90"></div>
+        <WavePattern />
+        
+        <div className="relative z-10 text-center px-12 max-w-lg">
+           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 mb-8 shadow-2xl shadow-cyan-900/50">
+             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+          </div>
+          <h3 className="text-4xl font-bold text-white mb-6 leading-tight tracking-tight">Únete a Dermacor</h3>
+          <p className="text-cyan-100 text-lg leading-relaxed font-light opacity-90">
+            La plataforma integral para gestionar pacientes, citas y obras sociales de forma centralizada.
+          </p>
+        </div>
       </div>
     </div>
   );

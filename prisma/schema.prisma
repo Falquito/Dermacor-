@@ -42,7 +42,7 @@ model Consultas {
   tratamientoConsulta String?
   fechaHoraConsulta   DateTime @default(now())
   nroAfiliado        String?
-  tipoConsulta       String
+  tipoConsulta       String 
   montoConsulta      Float?
 
   // FK

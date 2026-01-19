@@ -46,9 +46,12 @@ export default function CreateModalObraSocialComponent({onSuccess}:{onSuccess:()
       }, 2000)
 
     } catch (error) {
-      setMsgError(error)
+      const message = error instanceof Error ? error.message : String(error)
+      
+      setMsgError(message) // Ahora sí le pasamos un string
       setOpenNotifyNotSuccess(true)
       console.log(error)
+      
       setTimeout(()=>{
         setOpenNotifyNotSuccess(false)
       },3000)

@@ -20,16 +20,18 @@ export async function POST(request: Request) {
     if (!body.nombreObraSocial) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 })
     }
-
     const nuevaObra = await prisma.obraSocial.create({
       data: {
-        nombreObraSocial: body.nombreObraSocial,
+        nombreObraSocial: body.nombreObraSocial.toLowerCase(),
         estadoObraSocial: body.estadoObraSocial ?? true
       }
     })
 
     return NextResponse.json(nuevaObra, { status: 201 })
-  } catch {
-    return NextResponse.json({ error: 'Error al crear' }, { status: 500 })
+  } catch (e){
+    if(e.code==="P2002") {return NextResponse.json({ error: "No se pudo crear la obra social porque el nombre ingresado ya se encuentra registrada" }, { status: 400 })}
+    else{
+      return NextResponse.json({ error: 'Error al crear' + e }, { status: 500 })
+    }
   }
 }

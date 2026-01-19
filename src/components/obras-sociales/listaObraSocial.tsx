@@ -132,7 +132,10 @@ export default function ListadoObraSocial({ obras, onRefresh, isFiltered }: List
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-slate-500 text-sm">
-                         {String(obra.fechaHoraObraSocial).split("T")[0] + " " + String(obra.fechaHoraObraSocial).split("T")[1].split(".")[0]}
+                        
+                         {String(new Date(obra.fechaHoraObraSocial).toLocaleString('es-AR', {
+                          timeZone: 'America/Argentina/Salta', // O deja que detecte la del navegador
+                        })).split("T")[0]}
                       </TableCell>
                       <TableCell className="text-right pr-6">
                         <DropdownMenu>

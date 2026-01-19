@@ -82,7 +82,6 @@ export default function SideBar({ children }: SideBarProps) {
 
         {/* LINKS */}
         <div className="flex flex-col gap-2 p-4 py-6 overflow-y-auto overflow-x-hidden flex-1">
-            {/* ... lógica de items igual ... */}
              <p className={cn("px-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2", isCollapsed ? "hidden" : "block")}>Páginas</p>
             {MENU_ITEMS.map((tab, index) => {
                 const isActive = pathname === tab.url;

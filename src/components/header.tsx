@@ -10,7 +10,6 @@ export function Header() {
   const { data: session } = useSession();
   const router = useRouter();
   
-  // Usamos el contexto para abrir el sidebar
   const { toggleMobileMenu } = useSidebarContext();
 
   const handleLogout = async () => {
@@ -20,10 +19,9 @@ export function Header() {
 
   return (
     <header className="h-16 bg-white border-b border-cyan-100 shadow-sm sticky top-0 z-50">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
+      <nav className=" mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
         
         <div className="flex items-center gap-4">
-          {/* BOTÓN HAMBURGUESA (Solo Mobile) */}
           <button 
             onClick={toggleMobileMenu}
             className="md:hidden p-2 text-cyan-700 hover:bg-cyan-50 rounded-md transition-colors"
@@ -33,11 +31,10 @@ export function Header() {
 
           {/* LOGO */}
           <Link href="/" className="text-xl font-bold text-cyan-700 tracking-tight">
-            Dermacor
+            Dermacore
           </Link>
         </div>
 
-        {/* MENU DESKTOP (Login/Logout visible en PC) */}
         <div className="hidden md:flex items-center gap-4">
           {session ? (
             <>

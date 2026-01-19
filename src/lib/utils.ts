@@ -111,7 +111,7 @@ export function formatFechaArgentina(fechaInput: string | Date | null | undefine
       second: "2-digit",
       hour12: false 
     }).format(fecha);
-  } catch (error) {
+  } catch {
     return "Error fecha";
   }
 }

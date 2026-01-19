@@ -152,6 +152,75 @@ async function main() {
     });
   }
 
+  // Agregar múltiples consultas para el paciente con id 14 (índice 13) con fechas variadas
+  const paciente14 = pacientes[13]; // Agustina Castro, índice 13
+
+  const fechasAnteriores = [
+    new Date("2025-12-15T10:30:00Z"), // 15 diciembre 2025
+    new Date("2025-12-01T14:00:00Z"), // 1 diciembre 2025
+    new Date("2025-11-20T09:15:00Z"), // 20 noviembre 2025
+    new Date("2025-11-05T16:45:00Z"), // 5 noviembre 2025
+    new Date("2025-10-25T11:20:00Z"), // 25 octubre 2025
+    new Date("2025-10-10T13:30:00Z"), // 10 octubre 2025
+    new Date("2025-09-30T10:00:00Z"), // 30 septiembre 2025
+    new Date("2025-09-15T15:10:00Z"), // 15 septiembre 2025
+  ];
+
+  const motivosExtras = [
+    "Control de presión arterial",
+    "Revisión de laboratorio",
+    "Dolor en la zona lumbar",
+    "Consulta por alergia estacional",
+    "Seguimiento de medicación",
+    "Dolor de cabeza recurrente",
+    "Chequeo preventivo",
+    "Control de colesterol",
+  ];
+
+  const diagnosticosExtras = [
+    "Hipertensión controlada",
+    "Resultados normales",
+    "Lumbalgia mecánica",
+    "Alergia estacional confirmada",
+    "Situación estable",
+    "Cefalea tensional",
+    "Sin hallazgos",
+    "Dislipidemia leve",
+  ];
+
+  const tratamientosExtras = [
+    "Continuar medicación",
+    "Próximo control en 3 meses",
+    "Ejercicios y reposo",
+    "Antihistamínico según síntomas",
+    "Monitoreo de presión",
+    "Analgésico si es necesario",
+    "Revisión anual",
+    "Dieta balanceada y ejercicio",
+  ];
+
+  // Crear consultas adicionales para el paciente 14
+  for (let i = 0; i < fechasAnteriores.length; i++) {
+    const obra = obrasSociales[i % obrasSociales.length];
+    const fecha = fechasAnteriores[i];
+
+    await prisma.consultas.create({
+      data: {
+        idPaciente: paciente14.idPaciente,
+        idObraSocial: obra.idObraSocial,
+        fechaHoraConsulta: fecha,
+
+        motivoConsulta: motivosExtras[i],
+        diagnosticoConsulta: diagnosticosExtras[i],
+        tratamientoConsulta: tratamientosExtras[i],
+
+        nroAfiliado: `AF-${obra.idObraSocial}-${pad(paciente14.idPaciente, 4)}`,
+        tipoConsulta: tiposConsulta[i % tiposConsulta.length],
+        montoConsulta: 6000 + i * 500,
+      },
+    });
+  }
+
   const countOS = await prisma.obraSocial.count();
   const countPac = await prisma.paciente.count();
   const countCons = await prisma.consultas.count();

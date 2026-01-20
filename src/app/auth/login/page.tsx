@@ -63,7 +63,7 @@ function LoginContent() {
     <>
       {/* Pantalla de carga mientras se cargan los componentes */}
       {!isLoaded && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-cyan-900 via-cyan-950 to-cyan-950">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-linear-to-br from-cyan-900 via-cyan-950 to-cyan-950">
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-cyan-400 border-t-cyan-200 rounded-full animate-spin"></div>
             <p className="text-cyan-200 font-medium tracking-wide">Cargando Dermacor...</p>
@@ -92,7 +92,7 @@ function LoginContent() {
             Móvil: Tiene fondo blanco translúcido, bordes redondeados y sombra (look tarjeta flotante).
             Desktop (lg): Se quitan los bordes, sombras y fondo para que se vea limpio sobre el blanco.
         */}
-        <div className="w-full max-w-[420px] px-6 py-8 mx-4 
+        <div className="w-full max-w-105 px-6 py-8 mx-4 
                         bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20
                         lg:bg-transparent lg:shadow-none lg:rounded-none lg:border-none lg:p-0 lg:mx-0 lg:max-w-md">
           

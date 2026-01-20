@@ -86,7 +86,7 @@ export default function RegisterPage() {
     <>
       {/* Pantalla de carga mientras se cargan los componentes */}
       {!isLoaded && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-cyan-900 via-cyan-950 to-cyan-950">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-linear-to-br from-cyan-900 via-cyan-950 to-cyan-950">
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-cyan-400 border-t-cyan-200 rounded-full animate-spin"></div>
             <p className="text-cyan-200 font-medium tracking-wide">Cargando Dermacor...</p>
@@ -115,7 +115,7 @@ export default function RegisterPage() {
             Móvil: Estilo 'Glassmorphism' (blanco translúcido, bordes, sombras)
             Desktop: Estilo limpio (sin fondo, sin sombras, integrado)
         */}
-        <div className="w-full max-w-[480px] px-6 py-8 mx-4 
+        <div className="w-full max-w-120 px-6 py-8 mx-4 
                         bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20
                         lg:bg-transparent lg:shadow-none lg:rounded-none lg:border-none lg:p-0 lg:mx-0 lg:max-w-sm">
           
@@ -135,7 +135,7 @@ export default function RegisterPage() {
 
           {error && (
             <div className="mb-6 rounded-xl bg-red-50 p-4 border border-red-100 flex items-center gap-3">
-               <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                </svg>
               <p className="text-sm text-red-600 font-medium">{error}</p>

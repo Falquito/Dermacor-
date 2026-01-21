@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,6 +52,7 @@ export default function PacienteCard({
   onChanged,
   onEditSuccess,
 }: PacienteCardProps) {
+  const router = useRouter();
   const {
     idPaciente,
     nombrePaciente,
@@ -171,7 +173,7 @@ export default function PacienteCard({
 
           <Button
             className="mt-3 w-full rounded-lg bg-cyan-400 hover:bg-cyan-500"
-            onClick={() => onVerHistoria?.(idPaciente)}
+            onClick={() => router.push(`/pacientes/${idPaciente}`)}
           >
             Ver Historia Clínica
           </Button>

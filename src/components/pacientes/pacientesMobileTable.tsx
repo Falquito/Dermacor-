@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { PacienteConObras } from "@/types/pacienteConObras";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ function Item({
   onChanged?: () => void;
   onEditSuccess?: () => void;
 }) {
+  const router = useRouter();
   const {
     idPaciente,
     nombrePaciente,
@@ -159,7 +161,7 @@ function Item({
           type="button"
           variant="outline"
           className="mt-3 w-full"
-          onClick={() => onVerHistoria?.(idPaciente)}
+          onClick={() => router.push(`/pacientes/${idPaciente}`)}
         >
           Ver Historia Clínica
         </Button>

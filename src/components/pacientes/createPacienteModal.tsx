@@ -41,7 +41,7 @@ export default function CreatePacienteModal({ onCreated, onSuccess }: Props) {
           if (!v) setDniServerError(null);
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Nuevo paciente</DialogTitle>
           </DialogHeader>

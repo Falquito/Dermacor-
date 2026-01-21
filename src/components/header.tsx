@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
 import { useSidebarContext } from '@/components/ui/sidebar-context';
-import LogoComponent from './Logo';
+import LogoComponentHeader from './logoHeader';
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -22,7 +22,7 @@ export function Header() {
           >
             <Menu size={24} />
           </button>
-            <LogoComponent/>
+            <LogoComponentHeader/>
         </div>
 
         <div className="hidden md:flex items-center gap-4">

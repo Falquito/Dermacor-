@@ -30,7 +30,12 @@ type Props = {
   onSaved?: () => void;
 };
 
-export default function EditPacienteModal({ open, onOpenChange, paciente, onSaved }: Props) {
+export default function EditPacienteModal({
+  open,
+  onOpenChange,
+  paciente,
+  onSaved,
+}: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [dniServerError, setDniServerError] = useState<string | null>(null);
 
@@ -80,7 +85,9 @@ export default function EditPacienteModal({ open, onOpenChange, paciente, onSave
       onOpenChange(false);
     } catch (e: unknown) {
       const error = e as { message?: string };
-      const msg = error?.message ? String(error.message) : "Error al actualizar paciente";
+      const msg = error?.message
+        ? String(error.message)
+        : "Error al actualizar paciente";
       if (msg.toLowerCase().includes("dni")) {
         setDniServerError(msg);
         return;
@@ -93,25 +100,41 @@ export default function EditPacienteModal({ open, onOpenChange, paciente, onSave
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Editar paciente</DialogTitle>
         </DialogHeader>
 
-        <form id="edit-paciente-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          id="edit-paciente-form"
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4 mt-4 mb-6"
+        >
           <Input
             placeholder="Nombre"
-            className={errors.nombrePaciente ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-cyan-500"}
+            className={
+              errors.nombrePaciente
+                ? "border-red-500 focus-visible:ring-red-500"
+                : "focus-visible:ring-cyan-500"
+            }
             {...register("nombrePaciente", { required: true })}
           />
-          {errors.nombrePaciente && <p className="text-sm text-red-500">El nombre es obligatorio</p>}
+          {errors.nombrePaciente && (
+            <p className="text-sm text-red-500">El nombre es obligatorio</p>
+          )}
 
           <Input
             placeholder="Apellido"
-            className={errors.apellidoPaciente ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-cyan-500"}
+            className={
+              errors.apellidoPaciente
+                ? "border-red-500 focus-visible:ring-red-500"
+                : "focus-visible:ring-cyan-500"
+            }
             {...register("apellidoPaciente", { required: true })}
           />
-          {errors.apellidoPaciente && <p className="text-sm text-red-500">El apellido es obligatorio</p>}
+          {errors.apellidoPaciente && (
+            <p className="text-sm text-red-500">El apellido es obligatorio</p>
+          )}
 
           <Input
             placeholder="Teléfono"
@@ -140,8 +163,14 @@ export default function EditPacienteModal({ open, onOpenChange, paciente, onSave
                 onChange: () => setDniServerError(null),
               })}
             />
-            {errors.dniPaciente && <p className="text-sm text-red-500">DNI inválido (7 a 9 dígitos)</p>}
-            {!errors.dniPaciente && dniServerError && <p className="text-sm text-red-500">{dniServerError}</p>}
+            {errors.dniPaciente && (
+              <p className="text-sm text-red-500">
+                DNI inválido (7 a 9 dígitos)
+              </p>
+            )}
+            {!errors.dniPaciente && dniServerError && (
+              <p className="text-sm text-red-500">{dniServerError}</p>
+            )}
           </div>
         </form>
 

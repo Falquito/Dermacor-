@@ -6,12 +6,36 @@ export default function Home() {
   return (
     <div className="space-y-8">
       {/* Header de bienvenida */}
-      <div className="bg-gradient-to-r from-cyan-100/30 to-cyan-100/30 rounded-2xl p-8 text-cyan-600 text-cyan-500 shadow-lg">
-        <h1 className="text-3xl font-semibold flex items-center gap-2">
-          ¡Bienvenido a <LogoComponent size="md" />!
+      <div
+        className="
+          bg-cyan-50
+          rounded-2xl
+          p-4 sm:p-6 lg:p-8
+          shadow-md
+          transition-all duration-300 ease-out
+          hover:shadow-lg
+        "
+      >
+        <h1
+          className="
+            text-xl sm:text-2xl lg:text-3xl
+            font-semibold
+            text-cyan-700
+            flex flex-nowrap items-baseline gap-2
+          "
+        >
+          <span>Bienvenido a</span>
+          <LogoComponent />
         </h1>
 
-        <p className="text-cyan-600 mt-2">
+        <p
+          className="
+            mt-2
+            text-sm sm:text-base
+            text-cyan-600
+            max-w-xs sm:max-w-md
+          "
+        >
           Sistema de gestión para consultorios dermatológicos
         </p>
       </div>

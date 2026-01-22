@@ -33,7 +33,7 @@ export function Footer() {
                 <a href="#" className="hover:text-cyan-600 transition-colors">Reportar un error</a>
               </li>
               <li>
-                <a href="#" className="hover:text-cyan-600 transition-colors">Términos y condiciones</a>
+                <a href="/terminos-y-condiciones" className="hover:text-cyan-600 transition-colors">Términos y condiciones</a>
               </li>
             </ul>
           </div>

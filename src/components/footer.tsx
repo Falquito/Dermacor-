@@ -2,6 +2,7 @@
 
 import { Linkedin, Phone, MapPin, ExternalLink, Code2, Heart } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -15,7 +16,7 @@ export function Footer() {
           {/* Columna 1: El Sistema (Dermacor) */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              Dermacor <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-medium">v1.0.0</span>
+              DermaCore <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-medium">v1.0.0</span>
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
               Sistema integral de gestión dermatológica. Optimizando la atención clínica y la administración de pacientes con tecnología de punta.
@@ -27,7 +28,7 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Soporte</h4>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
-                <a href="#" className="hover:text-cyan-600 transition-colors">Documentación</a>
+                <Link href={"/documentacion"} className="hover:text-cyan-600 transition-colors">Documentación</Link>
               </li>
               <li>
                 <a href="#" className="hover:text-cyan-600 transition-colors">Reportar un error</a>

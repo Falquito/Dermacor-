@@ -1,0 +1,22 @@
+Modulo 1 - Introduccion al sistema
+
+1 - Primeros pasos:
+Holaa, ¿Como estas?, te presentamos DermaCore, un sistema de gestíon para consultorios.
+Queremos que te sientas lo mas comodo con nosotros, por eso es que nos esforzamos en cada detalle para vos.
+En esta guia te presentaremos como utilizar el sistema y si tienes alguna duda o consulta, quiero informarte de que puedes comunicarnos a traves de nuestro telefono de contacto o sino puedes optar por escribirlo en los comentarios de cada video.
+
+2 - Crear cuenta:
+Holaa, en este video veremos como es el proceso de crear una cuenta que es importante para nosotros, porque de esa manera podras hacer uso del mismo, sino es imposible jaja.
+
+Si es tu primer ingreso, veras que estamos en la parte de iniciar sesion o login, para poder acceder a crear una cuenta, es necesario hacer click en la parte de abajo donde dice "¿Aun no tienes una cuenta? Registrate."
+
+Okey, una vez realizado lo anterior, estaremos en otro apartado donde te solicitamos ciertos datos para poder crear una cuenta, necesitamos que los completes, veras que el nombre es opcional.
+
+Una vez completados los campos de los datos, lo siguiente es hacer click en el boton continuar, si todos los datos fueron completados segun los requisitos, veras que se redirige a el apartado de login.
+
+3 - Iniciar Sesion:
+Holaa, en este video continuaremos con el proceso de acceder a un sistema,aqui solo es necesario que llenes los campos con los datos con los que registraste la cuenta. Una vez completados es necesario hacer click en el boton "Iniciar Sesion" para poder ingresar en el sistema.
+
+4 - Paginas:
+Holaa, estamos en el ultimo video de la seccion donde quiero que veamos un pantallazo de lo que es el sistema, si ves a la izquierda estara unas cosas que vendrian a ser las paginas que hasta ahora tiene el sistema, veremos cada una en las siguientes secciones, por otro lado en el inicio veras que tenemos unas estadisticas del consultorio, porque queremos que puedas tener a mano informacion relevante para tomar decisiones.
+Okey nos vemos en la siguiente seccion, donde veremos como gestionar las obras sociales.

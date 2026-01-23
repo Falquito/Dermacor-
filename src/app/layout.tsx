@@ -3,8 +3,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Dermacor",
-  description: "Dermacor Application",
+  title: "DermaCore",
+  description: "DermaCore Application",
 };
 
 export const viewport: Viewport = {

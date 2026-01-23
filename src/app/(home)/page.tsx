@@ -25,7 +25,7 @@ export default function Home() {
           "
         >
           <span>Bienvenido a</span>
-          <LogoComponent />
+          <LogoComponent size="lg" />
         </h1>
 
         <p

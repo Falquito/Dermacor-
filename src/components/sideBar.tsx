@@ -98,7 +98,7 @@ export default function SideBar({ children }: SideBarProps) {
                             isActive ? "bg-cyan-50 text-cyan-700" : "text-gray-600 hover:bg-gray-50"
                         )}
                     >
-                        <Icon size={22} className={cn("flex-shrink-0", isActive ? "text-cyan-600" : "text-gray-500")} />
+                        <Icon size={22} className={cn("shrink-0", isActive ? "text-cyan-600" : "text-gray-500")} />
                         <span className={cn("whitespace-nowrap overflow-hidden transition-all duration-300 font-medium", isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>
                             {tab.name}
                         </span>
@@ -118,8 +118,8 @@ export default function SideBar({ children }: SideBarProps) {
                             <User size={18} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-900 truncate max-w-[140px]">{user?.name || "Usuario"}</span>
-                            <span className="text-xs text-gray-500 truncate max-w-[140px]">{user?.email}</span>
+                            <span className="text-sm font-medium text-gray-900 truncate max-w-35">{user?.name || "Usuario"}</span>
+                            <span className="text-xs text-gray-500 truncate max-w-35">{user?.email}</span>
                         </div>
                     </div>
                     <button 

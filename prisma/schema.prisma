@@ -28,11 +28,22 @@ model ObraSocial {
   idObraSocial        Int      @id @default(autoincrement())
   nombreObraSocial    String   @unique
   estadoObraSocial    Boolean  @default(true)
+  admiteCoseguro      Boolean  @default(false)
   fechaHoraObraSocial DateTime @default(now())
 
   // Relaciones
   consultas     Consultas[]
   
+}
+
+model Coseguro {
+  idCoseguro        Int      @id @default(autoincrement())
+  nombreCoseguro    String   @unique
+  estadoCoseguro    Boolean  @default(true)
+  fechaHoraCoseguro DateTime @default(now())
+
+  // Relaciones
+  consultas         Consultas[]
 }
 
 model Consultas {
@@ -48,13 +59,16 @@ model Consultas {
   // FK
   idPaciente    Int
   idObraSocial  Int?
+  idCoseguro    Int?
 
-  // Relaciones (1 consulta pertenece a 1 paciente y 1 obra social)
+  // Relaciones (1 consulta pertenece a 1 paciente, 1 obra social opcional y 1 coseguro opcional)
   paciente    Paciente   @relation(fields: [idPaciente], references: [idPaciente], onDelete: Restrict)
   obraSocial  ObraSocial? @relation(fields: [idObraSocial], references: [idObraSocial], onDelete: Restrict)
+  coseguro    Coseguro?   @relation(fields: [idCoseguro], references: [idCoseguro], onDelete: Restrict)
 
   @@index([idPaciente])
   @@index([idObraSocial])
+  @@index([idCoseguro])
   @@index([idPaciente, fechaHoraConsulta])
 }
 

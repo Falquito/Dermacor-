@@ -14,7 +14,7 @@ export default function SkeletonListObraSocialComponent() {
 
   return (
     <>
-    
+
       <div className="space-y-3 md:hidden">
         {skeletonRows.map((_, i) => (
           <Card key={i} className="border-slate-200 shadow-sm p-4">
@@ -103,3 +103,4 @@ export default function SkeletonListObraSocialComponent() {
     </>
   )
 }
+ 

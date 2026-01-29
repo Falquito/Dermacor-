@@ -241,3 +241,4 @@ export default function ListadoCoseguro({ coseguros, onRefresh, isFiltered }: Li
     </>
   )
 }
+ 

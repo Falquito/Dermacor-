@@ -12,6 +12,7 @@ async function main() {
   // Limpieza (orden importante por FKs)
   await prisma.consultas.deleteMany();
   await prisma.paciente.deleteMany();
+  await prisma.coseguro.deleteMany();
   await prisma.obraSocial.deleteMany();
   await prisma.user.deleteMany();
 
@@ -46,7 +47,28 @@ async function main() {
     orderBy: { idObraSocial: "asc" },
   });
 
-  // 2) Pacientes (30)
+  // 2) Coseguros de Salta, Argentina (8)
+  const cosegurosData = [
+    { nombreCoseguro: "Mapfre Seguros" },
+    { nombreCoseguro: "Zurich Seguros" },
+    { nombreCoseguro: "La Segunda Seguros" },
+    { nombreCoseguro: "Seguros Monterrey New York Life" },
+    { nombreCoseguro: "AXA Seguros" },
+    { nombreCoseguro: "Bupa Salud" },
+    { nombreCoseguro: "Consolidar Seguros" },
+    { nombreCoseguro: "Galeno Seguros" },
+  ];
+
+  await prisma.coseguro.createMany({
+    data: cosegurosData,
+    skipDuplicates: true,
+  });
+
+  const coseguros = await prisma.coseguro.findMany({
+    orderBy: { idCoseguro: "asc" },
+  });
+
+  // 3) Pacientes (30)
   const nombres: Array<[string, string]> = [
     ["Juan", "Pérez"],
     ["María", "Gómez"],
@@ -103,7 +125,7 @@ async function main() {
     pacientes.push(p);
   }
 
-  // 3) Consultas (15): 1 por paciente y 1 obra social
+  // 4) Consultas (15): 1 por paciente y 1 obra social
   const motivos = [
     "Control general",
     "Dolor de cabeza",
@@ -164,11 +186,13 @@ async function main() {
     const paciente = pacientes[i];
     const tipoConsulta = tiposConsulta[i % tiposConsulta.length];
     const obra = obrasSociales[i % obrasSociales.length];
+    const coseguro = coseguros[i % coseguros.length];
 
     await prisma.consultas.create({
       data: {
         idPaciente: paciente.idPaciente,
         idObraSocial: tipoConsulta === "obra-social" ? obra.idObraSocial : null,
+        idCoseguro: tipoConsulta === "obra-social" && i % 2 === 0 ? coseguro.idCoseguro : null,
 
         motivoConsulta: motivos[i % motivos.length],
         diagnosticoConsulta: diagnosticos[i % diagnosticos.length],
@@ -232,6 +256,7 @@ async function main() {
   // Crear consultas adicionales para el paciente 14
   for (let i = 0; i < fechasAnteriores.length; i++) {
     const obra = obrasSociales[i % obrasSociales.length];
+    const coseguro = coseguros[i % coseguros.length];
     const fecha = fechasAnteriores[i];
     const tipoConsulta = i % 2 === 0 ? "obra-social" : "particular";
 
@@ -239,6 +264,7 @@ async function main() {
       data: {
         idPaciente: paciente14.idPaciente,
         idObraSocial: tipoConsulta === "obra-social" ? obra.idObraSocial : null,
+        idCoseguro: tipoConsulta === "obra-social" && i % 2 === 0 ? coseguro.idCoseguro : null,
         fechaHoraConsulta: fecha,
 
         motivoConsulta: motivosExtras[i],
@@ -434,6 +460,7 @@ async function main() {
   // Crear 50 consultas para el paciente 30
   for (let i = 0; i < 50; i++) {
     const obra = obrasSociales[i % obrasSociales.length];
+    const coseguro = coseguros[i % coseguros.length];
     const fecha = fechas50Consultas[i];
     const tipoConsulta = i % 2 === 0 ? "obra-social" : "particular";
 
@@ -441,6 +468,7 @@ async function main() {
       data: {
         idPaciente: paciente30.idPaciente,
         idObraSocial: tipoConsulta === "obra-social" ? obra.idObraSocial : null,
+        idCoseguro: tipoConsulta === "obra-social" && i % 3 === 0 ? coseguro.idCoseguro : null,
         fechaHoraConsulta: fecha,
 
         motivoConsulta: motivos50[i],
@@ -455,12 +483,14 @@ async function main() {
   }
 
   const countOS = await prisma.obraSocial.count();
+  const countCos = await prisma.coseguro.count();
   const countPac = await prisma.paciente.count();
   const countCons = await prisma.consultas.count();
 
   console.log("Seed OK ✅");
   console.log({
     obrasSociales: countOS,
+    coseguros: countCos,
     pacientes: countPac,
     consultas: countCons,
   });

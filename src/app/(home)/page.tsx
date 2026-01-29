@@ -92,7 +92,7 @@ export default function Home() {
           </div>
         </Link>
 
-        {/* ✅ Coseguros */}
+        {/* Coseguros */}
         <Link
           href="/coseguros"
           className="group bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:border-cyan-200 transition-all duration-200"

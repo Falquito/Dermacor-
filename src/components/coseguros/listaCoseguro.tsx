@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { MoreHorizontal, SearchX, Pencil, ShieldPlus } from "lucide-react"
+import { MoreHorizontal, SearchX, Pencil, ShieldPlus, Trash2, RefreshCw } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -79,7 +80,6 @@ export default function ListadoCoseguro({ coseguros, onRefresh, isFiltered }: Li
         />
       )}
 
-      {/* ✅ EMPTY STATE (para mobile y desktop) */}
       {isEmpty ? (
         <Card className="border-slate-200 shadow-sm">
           <CardContent className="flex items-center justify-center">
@@ -103,29 +103,29 @@ export default function ListadoCoseguro({ coseguros, onRefresh, isFiltered }: Li
         </Card>
       ) : (
         <>
-          {/* ✅ MOBILE: lista/cards (sin tabla, sin slider) */}
+
           <CosegurosMobileList
             coseguros={coseguros}
             onEdit={(c) => setCoseguroToEdit(c)}
             onToggle={(id, isActive) => handleOpenConfirm(id, isActive)}
           />
 
-          {/* ✅ DESKTOP/TABLET: tabla (solo md+) */}
           <div className="hidden md:block">
             <Card className="border-slate-200 shadow-sm overflow-hidden">
               <CardContent className="p-0">
                 <Table>
-                  <TableHeader className="border-b border-slate-100">
-                    <TableRow className="hover:bg-slate-50">
-                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 pl-6 h-12">
+
+                  <TableHeader className="border-b border-slate-100 bg-white">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 pl-6 py-3 h-auto align-middle">
                         Coseguro
                       </TableHead>
 
-                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 h-12">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 py-3 h-auto align-middle">
                         Estado
                       </TableHead>
 
-                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500 pr-6 h-12">
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500 pr-6 py-3 h-auto align-middle">
                         Acciones
                       </TableHead>
                     </TableRow>
@@ -157,7 +157,7 @@ export default function ListadoCoseguro({ coseguros, onRefresh, isFiltered }: Li
                                 className={`block font-medium capitalize ${
                                   c.estadoCoseguro
                                     ? "text-slate-900"
-                                    : "text-slate-500 line-through decoration-slate-300"
+                                    : "text-slate-500 decoration-slate-300"
                                 }`}
                               >
                                 {c.nombreCoseguro}
@@ -174,13 +174,13 @@ export default function ListadoCoseguro({ coseguros, onRefresh, isFiltered }: Li
                               ${
                                 c.estadoCoseguro
                                   ? "bg-cyan-50 text-cyan-700 border-cyan-200"
-                                  : "bg-slate-100 text-slate-500 border-slate-200"
+                                  : "bg-red-100 text-red-500 border-red-200"
                               }
                             `}
                           >
                             <div
                               className={`mr-1.5 h-1.5 w-1.5 rounded-full ${
-                                c.estadoCoseguro ? "bg-cyan-500" : "bg-slate-400"
+                                c.estadoCoseguro ? "bg-cyan-500" : "bg-red-400"
                               }`}
                             />
                             {c.estadoCoseguro ? "Activo" : "Inactivo"}
@@ -215,12 +215,17 @@ export default function ListadoCoseguro({ coseguros, onRefresh, isFiltered }: Li
 
                               <DropdownMenuSeparator />
 
-                              <DropdownMenuItem
-                                onClick={() => handleOpenConfirm(c.idCoseguro, c.estadoCoseguro)}
-                                className="cursor-pointer"
-                              >
-                                {c.estadoCoseguro ? "Desactivar" : "Restaurar"}
-                              </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleOpenConfirm(c.idCoseguro, c.estadoCoseguro)}
+                                  className="cursor-pointer text-slate-600 focus:text-slate-900"
+                                >
+                                  {c.estadoCoseguro ? (
+                                    <Trash2 className="mr-2 h-4 w-4 text-red-400" />
+                                  ) : (
+                                    <RefreshCw className="mr-2 h-4 w-4 text-cyan-600" />
+                                  )}
+                                  {c.estadoCoseguro ? "Desactivar" : "Restaurar"}
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

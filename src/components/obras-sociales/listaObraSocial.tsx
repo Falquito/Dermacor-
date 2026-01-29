@@ -169,7 +169,7 @@ export default function ListadoObraSocial({
         />
       )}
 
-      {/* Celular*/}
+      {/* Celular */}
       <div className="grid grid-cols-1 gap-4 md:hidden">
         {obras.map((obra) => (
           <div
@@ -223,26 +223,30 @@ export default function ListadoObraSocial({
         ))}
       </div>
 
-      {/* Escritorio*/}
+      {/* Escritorio */}
       <Card className="hidden md:block border-slate-200 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <Table>
-            <TableHeader className="border-b border-slate-100">
-              <TableRow className="hover:bg-slate-50">
-                <TableHead className="w-[400px] text-xs font-semibold uppercase tracking-wider text-slate-500 pl-6 h-12">
+            <TableHeader className="border-b border-slate-100 bg-white">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[400px] text-xs font-semibold uppercase tracking-wider text-slate-500 pl-6 py-3 h-auto align-middle">
                   Obra Social
                 </TableHead>
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 h-12">
+
+                <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 py-3 h-auto align-middle">
                   Estado
                 </TableHead>
-                <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 h-12">
+
+                <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 py-3 h-auto align-middle">
                   Fecha de creación
                 </TableHead>
-                <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500 pr-6 h-12">
+
+                <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500 pr-6 py-3 h-auto align-middle">
                   Acciones
                 </TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {obras.map((obra) => (
                 <TableRow
@@ -268,6 +272,7 @@ export default function ListadoObraSocial({
                       </span>
                     </div>
                   </TableCell>
+
                   <TableCell>
                     <Badge
                       variant="outline"
@@ -284,11 +289,13 @@ export default function ListadoObraSocial({
                       {obra.estadoObraSocial ? "Activa" : "Inactiva"}
                     </Badge>
                   </TableCell>
+
                   <TableCell className="text-slate-500 text-sm">
                     {new Date(obra.fechaHoraObraSocial).toLocaleDateString(
-                      "es-AR",
+                      "es-AR"
                     )}
                   </TableCell>
+
                   <TableCell className="text-right pr-6">
                     <ActionMenu obra={obra} />
                   </TableCell>
@@ -301,3 +308,4 @@ export default function ListadoObraSocial({
     </>
   );
 }
+ 

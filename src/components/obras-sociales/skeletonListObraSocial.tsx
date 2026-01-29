@@ -1,10 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -14,60 +8,99 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-export default function SkeletonListObraSocialComponent(){
-  const skeletonRows = Array.from({ length: 5 }) 
+
+export default function SkeletonListObraSocialComponent() {
+  const skeletonRows = Array.from({ length: 6 })
 
   return (
-    <Card className="border-slate-200 shadow-sm">
-      <CardHeader className="pb-4">
-        <CardTitle>
-          <Skeleton className="h-6 w-40" />
-        </CardTitle>
-        <CardDescription>
-          <Skeleton className="h-4 w-64 mt-2" />
-        </CardDescription>
-      </CardHeader>
+    <>
 
-      <CardContent>
-        <div className="rounded-md border border-slate-200 overflow-hidden">
-          <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="hidden md:table-cell">Fecha y hora</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {skeletonRows.map((_, index) => (
-                <TableRow key={index} className="hover:bg-transparent">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="h-8 w-8 rounded" />
-                      <Skeleton className="h-4 w-32 md:w-48" />
-                    </div>
-                  </TableCell>
+      <div className="space-y-3 md:hidden">
+        {skeletonRows.map((_, i) => (
+          <Card key={i} className="border-slate-200 shadow-sm p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <Skeleton className="h-10 w-10 rounded-lg" />
 
-                  <TableCell>
-                    <Skeleton className="h-5 w-16 rounded-full" />
-                  </TableCell>
+                <div className="min-w-0">
+                  {/* Nombre */}
+                  <Skeleton className="h-4 w-48 max-w-[70vw]" />
+                  {/* Estado */}
+                  <Skeleton className="h-6 w-20 rounded-full mt-2" />
+                  {/* Fecha */}
+                  <Skeleton className="h-3 w-28 mt-2" />
+                </div>
+              </div>
 
-                  <TableCell className="hidden md:table-cell">
-                    <Skeleton className="h-4 w-36" />
-                  </TableCell>
+              <Skeleton className="h-9 w-9 rounded-md shrink-0" />
+            </div>
+          </Card>
+        ))}
+      </div>
 
-                  <TableCell className="text-right">
-                    <div className="flex justify-end">
-                      <Skeleton className="h-8 w-8 rounded-md" />
-                    </div>
-                  </TableCell>
+      <div className="hidden md:block">
+        <Card className="border-slate-200 shadow-sm overflow-hidden">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader className="border-b border-slate-100 bg-white">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[400px] text-xs font-semibold uppercase tracking-wider text-slate-500 pl-6 py-3 h-auto align-middle">
+                    Obra Social
+                  </TableHead>
+
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 py-3 h-auto align-middle">
+                    Estado
+                  </TableHead>
+
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500 py-3 h-auto align-middle">
+                    Fecha de creación
+                  </TableHead>
+
+                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500 pr-6 py-3 h-auto align-middle">
+                    Acciones
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
-    )
+              </TableHeader>
+
+              <TableBody>
+                {skeletonRows.map((_, index) => (
+                  <TableRow
+                    key={index}
+                    className="hover:bg-transparent border-slate-100"
+                  >
+                    {/* Obra Social (icono + nombre) */}
+                    <TableCell className="pl-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="h-10 w-10 rounded-lg" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-56" />
+                          <Skeleton className="h-3 w-32" />
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Estado */}
+                    <TableCell className="py-4">
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                    </TableCell>
+
+                    {/* Fecha */}
+                    <TableCell className="py-4">
+                      <Skeleton className="h-4 w-28" />
+                    </TableCell>
+
+                    {/* Acciones */}
+                    <TableCell className="text-right pr-6 py-4">
+                      <Skeleton className="h-8 w-8 rounded-md ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  )
 }
+ 

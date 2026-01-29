@@ -8,12 +8,69 @@ import { ObraSocial } from "@/types/obraSocial"
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { Coseguro } from "@/types/coseguro";
+import { CreateCoseguroDto } from "@/app/api/coseguro/dto/create-coseguro.dto";
+import { UpdateCoseguroDto } from "@/app/api/coseguro/dto/update-coseguro.dto";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+//Coseguros
 
+export async function fetchCoseguros(): Promise<Coseguro[]> {
+    const request = await fetch("/api/coseguro")
+    const response = await request.json()
+    if(response.error) throw new Error(response.error)
+    return response
+}
+
+export async function createCoseguro(createCoseguroDto:CreateCoseguroDto){
+  const {nombreCoseguro} = createCoseguroDto
+  const request = await fetch("api/coseguro",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({nombreCoseguro})
+  })
+
+  const response = await request.json()
+
+  if(response.error) throw new Error(response.error)
+  return response
+
+}
+export async function updateCoseguro(updateCoseguroDto:UpdateCoseguroDto){
+  const {nombreCoseguro,id} = updateCoseguroDto
+  const request = await fetch(`api/coseguro/${id}`,{
+    method:"PATCH",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({nombreCoseguro})
+  })
+
+  const response = await request.json()
+  if(response.error) throw new Error(response.error)
+  return response
+
+}
+
+export async function deleteCoseguro(id:number){
+  const request = await fetch(`api/coseguro/${id}`,{
+    method:"DELETE",
+    headers:{
+      "Content-Type":"application/json"
+    }
+  })
+
+  const response = await request.json()
+  console.log(response)
+  if(response.error) throw new Error(response.error)
+  return response
+
+}
 // Obras Sociales
 
 export async function fetchObrasApi(): Promise<ObraSocial[]> {

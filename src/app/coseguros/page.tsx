@@ -1,30 +1,18 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import {useState } from 'react'
 import { ProtectedPage } from '@/components/auth/ProtectedPage'
-
-import type { Coseguro } from '@/types/coseguro'
 import HeaderCoseguro from '@/components/coseguros/header'
 import SearcherCoseguro from '@/components/coseguros/searcherCoseguro'
 import SkeletonListCoseguro from '@/components/coseguros/skeletonListCoseguro'
 import ListadoCoseguro from '@/components/coseguros/listaCoseguro'
+import { useCoseguros } from '@/hooks/useCoseguros'
 
 function CosegurosContent() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVA' | 'INACTIVA'>('ALL')
-
-  const coseguros = useMemo<Coseguro[]>(
-    () => [
-      { idCoseguro: 1, nombreCoseguro: 'Coseguro Particular', estadoCoseguro: true, fechaHoraCoseguro: new Date() },
-      { idCoseguro: 2, nombreCoseguro: 'Coseguro Plan B', estadoCoseguro: false, fechaHoraCoseguro: new Date() },
-    ],
-    []
-  )
-
-  const loading = false
-  const error: string | null = null
-  const refrescar = () => {}
-
+  const { coseguros, loading, error, refrescar } = useCoseguros()
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50/50">

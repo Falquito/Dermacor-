@@ -17,8 +17,10 @@ import { useForm, SubmitHandler } from "react-hook-form"
 import type { InputsCreateCoseguro } from "@/types/inputsCreateCoseguro"
 import NotifySuccessComponent from "@/components/obras-sociales/notifySuccess"
 import NotifyNotSuccessComponent from "@/components/obras-sociales/notifyNotSuccess"
+import { updateCoseguro, updateObraSocial } from "@/lib/utils"
 
 interface UpdateModalProps {
+  idCoseguro:number
   currentName: string
   onSuccess: () => void
   open: boolean
@@ -26,6 +28,7 @@ interface UpdateModalProps {
 }
 
 export default function UpdateModalCoseguroComponent({
+  idCoseguro,
   currentName,
   onSuccess,
   open,
@@ -52,12 +55,11 @@ export default function UpdateModalCoseguroComponent({
     if (!isOpen) onClose()
   }
 
-  const onSubmit: SubmitHandler<InputsCreateCoseguro> = async () => {
+  const onSubmit: SubmitHandler<InputsCreateCoseguro> = async (data) => {
     try {
       setIsLoading(true)
 
-      // ✅ Solo UI (simulación)
-      await new Promise((r) => setTimeout(r, 600))
+      await updateCoseguro({nombreCoseguro:data.name,id:idCoseguro})
 
       onSuccess()
       setOpenNotify(true)

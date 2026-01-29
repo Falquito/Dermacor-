@@ -18,6 +18,7 @@ import NotifySuccessComponent from "@/components/obras-sociales/notifySuccess"
 import ConfirmModalChangeStateCoseguro from "./confirmModalChangeStateCoseguro"
 import UpdateModalCoseguroComponent from "./updateModalCoseguro"
 import CosegurosMobileList from "./cosegurosMobileList"
+import { deleteCoseguro } from "@/lib/utils"
 
 interface ListadoProps {
   coseguros: Coseguro[]
@@ -40,7 +41,7 @@ export default function ListadoCoseguro({ coseguros, onRefresh, isFiltered }: Li
     if (!itemToToggle) return
     try {
       setLoadingToggle(true)
-      await new Promise((r) => setTimeout(r, 600)) // simulación
+      await deleteCoseguro(itemToToggle.id)
       onRefresh()
       setOpenNotify(true)
       setItemToToggle(null)
@@ -70,6 +71,7 @@ export default function ListadoCoseguro({ coseguros, onRefresh, isFiltered }: Li
 
       {coseguroToEdit && (
         <UpdateModalCoseguroComponent
+          idCoseguro={coseguroToEdit.idCoseguro}
           open={!!coseguroToEdit}
           onClose={() => setCoseguroToEdit(null)}
           currentName={coseguroToEdit.nombreCoseguro}

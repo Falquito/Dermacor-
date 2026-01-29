@@ -68,7 +68,7 @@ export async function DELETE(
     await prisma.coseguro.update({
       where: { idCoseguro: +id },
       data: {
-        estadoCoseguro: false
+        estadoCoseguro: !coseguro.estadoCoseguro
       }
     })
 

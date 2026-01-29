@@ -18,6 +18,7 @@ import { useForm, SubmitHandler } from "react-hook-form"
 import type { InputsCreateCoseguro } from "@/types/inputsCreateCoseguro"
 import NotifySuccessComponent from "@/components/obras-sociales/notifySuccess"
 import NotifyNotSuccessComponent from "@/components/obras-sociales/notifyNotSuccess"
+import { createCoseguro } from "@/lib/utils"
 
 export default function CreateModalCoseguroComponent({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false)
@@ -32,12 +33,11 @@ export default function CreateModalCoseguroComponent({ onSuccess }: { onSuccess:
     formState: { errors },
   } = useForm<InputsCreateCoseguro>()
 
-  const onSubmit: SubmitHandler<InputsCreateCoseguro> = async () => {
+  const onSubmit: SubmitHandler<InputsCreateCoseguro> = async (data) => {
     try {
       setIsLoading(true)
 
-      // ✅ Solo UI (simulación)
-      await new Promise((r) => setTimeout(r, 600))
+      await createCoseguro({nombreCoseguro:data.name})
 
       onSuccess()
       setOpenNotify(true)
@@ -59,12 +59,12 @@ export default function CreateModalCoseguroComponent({ onSuccess }: { onSuccess:
       <NotifySuccessComponent
         open={openNotifySuccess}
         title="Operación exitosa"
-        description="El nuevo coseguro se ha registrado (simulado)."
+        description="El nuevo coseguro se ha registrado."
       />
       <NotifyNotSuccessComponent
         open={openNotifyNotSuccess}
         title="Algo ha fallado"
-        description="No se pudo completar la acción (simulado)."
+        description="No se pudo completar la acción."
       />
 
       <Dialog open={open} onOpenChange={setOpen}>

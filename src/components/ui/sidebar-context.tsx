@@ -7,12 +7,16 @@ interface SidebarContextType {
   isMobileOpen: boolean;
   toggleMobileMenu: () => void;
   closeMobileMenu: () => void;
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
+  toggleCollapsed: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
 
   // Cerrar menú automáticamente al cambiar de ruta
@@ -22,9 +26,17 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 
   const toggleMobileMenu = () => setIsMobileOpen((prev) => !prev);
   const closeMobileMenu = () => setIsMobileOpen(false);
+  const toggleCollapsed = () => setIsCollapsed((prev) => !prev);
 
   return (
-    <SidebarContext.Provider value={{ isMobileOpen, toggleMobileMenu, closeMobileMenu }}>
+    <SidebarContext.Provider value={{ 
+      isMobileOpen, 
+      toggleMobileMenu, 
+      closeMobileMenu,
+      isCollapsed,
+      setIsCollapsed,
+      toggleCollapsed
+    }}>
       {children}
     </SidebarContext.Provider>
   );

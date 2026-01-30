@@ -3,9 +3,6 @@ import {
   Users,
   IdCard,
   ArrowRight,
-  Activity,
-  Calendar,
-  Shield,
   ShieldPlus,
 } from "lucide-react"
 import LogoComponent from "@/components/Logo"
@@ -113,33 +110,6 @@ export default function Home() {
             </div>
           </div>
         </Link>
-      </div>
-
-      {/* Características */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Características del sistema
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-            <Activity className="w-5 h-5 text-cyan-600" />
-            <span className="text-sm text-gray-700">
-              Historial de consultas
-            </span>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-            <Calendar className="w-5 h-5 text-cyan-600" />
-            <span className="text-sm text-gray-700">
-              Registro de fechas
-            </span>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-            <Shield className="w-5 h-5 text-cyan-600" />
-            <span className="text-sm text-gray-700">
-              Datos seguros
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* Estadísticas */}

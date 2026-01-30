@@ -11,6 +11,7 @@ interface SidebarContextType {
   setIsCollapsed: (collapsed: boolean) => void;
   toggleCollapsed: () => void;
   isReady: boolean;
+  resetSidebar: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -74,6 +75,16 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 
   const toggleMobileMenu = useCallback(() => setIsMobileOpen((prev) => !prev), []);
   const closeMobileMenu = useCallback(() => setIsMobileOpen(false), []);
+  
+  // Resetear sidebar a estado abierto (para usar al iniciar sesión)
+  const resetSidebar = useCallback(() => {
+    setIsCollapsedState(false);
+    try {
+      localStorage.setItem(STORAGE_KEY, "false");
+    } catch {
+      // Ignorar errores de localStorage
+    }
+  }, []);
 
   const value = useMemo(() => ({
     isMobileOpen,
@@ -82,8 +93,9 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     isCollapsed,
     setIsCollapsed,
     toggleCollapsed,
-    isReady
-  }), [isMobileOpen, toggleMobileMenu, closeMobileMenu, isCollapsed, setIsCollapsed, toggleCollapsed, isReady]);
+    isReady,
+    resetSidebar
+  }), [isMobileOpen, toggleMobileMenu, closeMobileMenu, isCollapsed, setIsCollapsed, toggleCollapsed, isReady, resetSidebar]);
 
   return (
     <SidebarContext.Provider value={value}>

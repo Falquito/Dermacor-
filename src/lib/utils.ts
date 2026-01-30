@@ -2,145 +2,148 @@ import type { PacienteConObras } from "@/types/pacienteConObras";
 import type { CreatePacienteDto } from "@/app/api/pacientes/dto/create-paciente.dto";
 import type { UpdatePacienteDto } from "@/app/api/pacientes/dto/update-paciente.dto";
 
-import { CreateObraSocialDto } from "@/app/api/obras-sociales/dto/create-obra-social.dto"
-import { UpdateObraSocialDto } from "@/app/api/obras-sociales/dto/update-obra-social.dto"
-import { ObraSocial } from "@/types/obraSocial"
+import { CreateObraSocialDto } from "@/app/api/obras-sociales/dto/create-obra-social.dto";
+import { UpdateObraSocialDto } from "@/app/api/obras-sociales/dto/update-obra-social.dto";
+import { ObraSocial } from "@/types/obraSocial";
 
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 import { Coseguro } from "@/types/coseguro";
 import { CreateCoseguroDto } from "@/app/api/coseguro/dto/create-coseguro.dto";
 import { UpdateCoseguroDto } from "@/app/api/coseguro/dto/update-coseguro.dto";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 //Coseguros
 
 export async function fetchCoseguros(): Promise<Coseguro[]> {
-    const request = await fetch("/api/coseguro")
-    const response = await request.json()
-    if(response.error) throw new Error(response.error)
-    return response
+  const request = await fetch("/api/coseguro");
+  const response = await request.json();
+  if (response.error) throw new Error(response.error);
+  return response;
 }
 
-export async function createCoseguro(createCoseguroDto:CreateCoseguroDto){
-  const {nombreCoseguro} = createCoseguroDto
-  const request = await fetch("api/coseguro",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
+export async function createCoseguro(createCoseguroDto: CreateCoseguroDto) {
+  const { nombreCoseguro } = createCoseguroDto;
+  const request = await fetch("api/coseguro", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
-    body:JSON.stringify({nombreCoseguro})
-  })
+    body: JSON.stringify({ nombreCoseguro }),
+  });
 
-  const response = await request.json()
+  const response = await request.json();
 
-  if(response.error) throw new Error(response.error)
-  return response
-
+  if (response.error) throw new Error(response.error);
+  return response;
 }
-export async function updateCoseguro(updateCoseguroDto:UpdateCoseguroDto){
-  const {nombreCoseguro,id} = updateCoseguroDto
-  const request = await fetch(`api/coseguro/${id}`,{
-    method:"PATCH",
-    headers:{
-      "Content-Type":"application/json"
+export async function updateCoseguro(updateCoseguroDto: UpdateCoseguroDto) {
+  const { nombreCoseguro, id } = updateCoseguroDto;
+  const request = await fetch(`api/coseguro/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
     },
-    body:JSON.stringify({nombreCoseguro})
-  })
+    body: JSON.stringify({ nombreCoseguro }),
+  });
 
-  const response = await request.json()
-  if(response.error) throw new Error(response.error)
-  return response
-
+  const response = await request.json();
+  if (response.error) throw new Error(response.error);
+  return response;
 }
 
-export async function deleteCoseguro(id:number){
-  const request = await fetch(`api/coseguro/${id}`,{
-    method:"DELETE",
-    headers:{
-      "Content-Type":"application/json"
-    }
-  })
+export async function deleteCoseguro(id: number) {
+  const request = await fetch(`api/coseguro/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-  const response = await request.json()
-  console.log(response)
-  if(response.error) throw new Error(response.error)
-  return response
-
+  const response = await request.json();
+  console.log(response);
+  if (response.error) throw new Error(response.error);
+  return response;
 }
 // Obras Sociales
 
 export async function fetchObrasApi(): Promise<ObraSocial[]> {
-    const request = await fetch("/api/obras-sociales")
-    const response = await request.json()
-    if(response.error) throw new Error(response.error)
-    return response
+  const request = await fetch("/api/obras-sociales");
+  const response = await request.json();
+  if (response.error) throw new Error(response.error);
+  return response;
 }
 
-
-export async function createObraSocial(createObraSocialDto:CreateObraSocialDto){
-  const {nombreObraSocial} = createObraSocialDto
-  const request = await fetch("api/obras-sociales",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
+export async function createObraSocial(
+  createObraSocialDto: CreateObraSocialDto,
+) {
+  const { nombreObraSocial, admiteCoseguro } = createObraSocialDto;
+  const request = await fetch("api/obras-sociales", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
-    body:JSON.stringify({nombreObraSocial:nombreObraSocial})
-  })
+    body: JSON.stringify({
+      nombreObraSocial,
+      admiteCoseguro,
+    }),
+  });
 
-  const response = await request.json()
+  const response = await request.json();
 
-  if(response.error) throw new Error(response.error)
-  return response
-
+  if (response.error) throw new Error(response.error);
+  return response;
 }
 
-export async function updateObraSocial(updateObraSocial:UpdateObraSocialDto){
-  const {nombreObraSocial,id} = updateObraSocial
-  const request = await fetch(`api/obras-sociales/${id}`,{
-    method:"PATCH",
-    headers:{
-      "Content-Type":"application/json"
+export async function updateObraSocial(updateObraSocial: UpdateObraSocialDto) {
+  const { nombreObraSocial, id, admiteCoseguro } = updateObraSocial;
+  const request = await fetch(`api/obras-sociales/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
     },
-    body:JSON.stringify({nombreObraSocial:nombreObraSocial})
-  })
+    body: JSON.stringify({
+      nombreObraSocial,
+      admiteCoseguro,
+    }),
+  });
 
-  const response = await request.json()
-  if(response.error) throw new Error(response.error)
-  return response
-
+  const response = await request.json();
+  if (response.error) throw new Error(response.error);
+  return response;
 }
 
-export async function deleteObraSocial(id:number){
-  const request = await fetch(`api/obras-sociales/${id}`,{
-    method:"DELETE",
-    headers:{
-      "Content-Type":"application/json"
-    }
-  })
+export async function deleteObraSocial(id: number) {
+  const request = await fetch(`api/obras-sociales/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-  const response = await request.json()
-  console.log(response)
-  if(response.error) throw new Error(response.error)
-  return response
-
+  const response = await request.json();
+  console.log(response);
+  if (response.error) throw new Error(response.error);
+  return response;
 }
 
-export function formatFechaArgentina(fechaInput: string | Date | null | undefined): string {
+export function formatFechaArgentina(
+  fechaInput: string | Date | null | undefined,
+): string {
   // 1. Si no hay dato, devolvemos un guion
   if (!fechaInput) return "-";
 
   let fecha: Date;
 
   // 2. Normalización inteligente
-  if (typeof fechaInput === 'string') {
+  if (typeof fechaInput === "string") {
     // Caso A: Viene como "2026-01-14 22:50:57" (SQL standard) -> Lo convertimos a ISO UTC
-    if (fechaInput.includes(' ') && !fechaInput.includes('T')) {
+    if (fechaInput.includes(" ") && !fechaInput.includes("T")) {
       fecha = new Date(fechaInput.replace(" ", "T") + "Z");
-    } 
+    }
     // Caso B: Viene como "2026-01-14T22:50:57.000Z" (ISO standard) -> JS lo entiende directo
     else {
       fecha = new Date(fechaInput);
@@ -150,10 +153,10 @@ export function formatFechaArgentina(fechaInput: string | Date | null | undefine
     fecha = fechaInput;
   }
 
-  // 3. ¡VALIDACIÓN CRÍTICA! 
+  // 3. ¡VALIDACIÓN CRÍTICA!
   // Verificamos si la fecha es válida. Si es "Invalid Date", getTime() devuelve NaN.
   if (isNaN(fecha.getTime())) {
-    return "Fecha inválida"; 
+    return "Fecha inválida";
   }
 
   // 4. Formateamos si todo está bien
@@ -166,7 +169,7 @@ export function formatFechaArgentina(fechaInput: string | Date | null | undefine
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      hour12: false 
+      hour12: false,
     }).format(fecha);
   } catch {
     return "Error fecha";
@@ -193,7 +196,9 @@ export async function createPaciente(createPacienteDto: CreatePacienteDto) {
   return response;
 }
 
-export async function updatePaciente(updatePacienteDto: UpdatePacienteDto & { id: number }) {
+export async function updatePaciente(
+  updatePacienteDto: UpdatePacienteDto & { id: number },
+) {
   const { id, ...payload } = updatePacienteDto;
   const request = await fetch(`api/pacientes/${id}`, {
     method: "PUT",
@@ -217,7 +222,10 @@ export async function deletePaciente(id: number) {
   return response;
 }
 
-export async function setEstadoPaciente(id: number, estadoPaciente: boolean): Promise<PacienteConObras> {
+export async function setEstadoPaciente(
+  id: number,
+  estadoPaciente: boolean,
+): Promise<PacienteConObras> {
   const request = await fetch(`api/pacientes/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

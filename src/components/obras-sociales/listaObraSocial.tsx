@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Trash2,
   RefreshCw,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -114,6 +115,16 @@ export default function ListadoObraSocial({
     </DropdownMenu>
   );
 
+  const CoseguroBadge = () => (
+    <Badge
+      variant="secondary"
+      className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 px-2 py-0.5 text-[10px] font-medium transition-colors"
+    >
+      <Coins className="h-3 w-3" />
+      Admite Coseguro
+    </Badge>
+  );
+
   if (obras.length === 0) {
     return (
       <Card className="border-slate-200 shadow-sm border-dashed">
@@ -165,11 +176,12 @@ export default function ListadoObraSocial({
           onClose={() => setObraToEdit(null)}
           idObraSocial={obraToEdit.idObraSocial}
           currentName={obraToEdit.nombreObraSocial}
+          currentAdmiteCoseguro={obraToEdit.admiteCoseguro}
           onSuccess={onRefresh}
         />
       )}
 
-      {/* Celular */}
+      {/* --- VISTA MOVIL --- */}
       <div className="grid grid-cols-1 gap-4 md:hidden">
         {obras.map((obra) => (
           <div
@@ -194,17 +206,22 @@ export default function ListadoObraSocial({
                   >
                     {obra.nombreObraSocial}
                   </h3>
-                  <Badge
-                    variant="outline"
-                    className={`mt-1 px-2 py-0 text-[10px] font-medium border
-                      ${
-                        obra.estadoObraSocial
-                          ? "bg-cyan-50 text-cyan-700 border-cyan-200"
-                          : "bg-slate-100 text-slate-500 border-slate-200"
-                      }`}
-                  >
-                    {obra.estadoObraSocial ? "Activa" : "Inactiva"}
-                  </Badge>
+
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <Badge
+                      variant="outline"
+                      className={`px-2 py-0 text-[10px] font-medium border
+                        ${
+                          obra.estadoObraSocial
+                            ? "bg-cyan-50 text-cyan-700 border-cyan-200"
+                            : "bg-slate-100 text-slate-500 border-slate-200"
+                        }`}
+                    >
+                      {obra.estadoObraSocial ? "Activa" : "Inactiva"}
+                    </Badge>
+                    {/* Renderizamos condicionalmente el badge de Coseguro */}
+                    {obra.admiteCoseguro && <CoseguroBadge />}
+                  </div>
                 </div>
               </div>
               <ActionMenu obra={obra} />
@@ -223,7 +240,7 @@ export default function ListadoObraSocial({
         ))}
       </div>
 
-      {/* Escritorio */}
+      {/* --- VISTA ESCRITORIO --- */}
       <Card className="hidden md:block border-slate-200 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <Table>
@@ -255,6 +272,7 @@ export default function ListadoObraSocial({
                 >
                   <TableCell className="pl-6 py-4">
                     <div className="flex items-center gap-4">
+                      {/* Icono de edificio */}
                       <div
                         className={`h-10 w-10 rounded-lg flex items-center justify-center border shadow-sm transition-colors
                           ${
@@ -265,11 +283,18 @@ export default function ListadoObraSocial({
                       >
                         <Building2 className="h-5 w-5" />
                       </div>
-                      <span
-                        className={`block font-medium capitalize ${!obra.estadoObraSocial && "text-slate-500 line-through decoration-slate-300"}`}
-                      >
-                        {obra.nombreObraSocial}
-                      </span>
+
+                      {/* Nombre y Badge de Coseguro */}
+                      <div className="flex flex-col items-start gap-1">
+                        <span
+                          className={`font-medium capitalize ${!obra.estadoObraSocial && "text-slate-500 line-through decoration-slate-300"}`}
+                        >
+                          {obra.nombreObraSocial}
+                        </span>
+
+                        {/* Aquí insertamos el indicador visual debajo del nombre */}
+                        {obra.admiteCoseguro && <CoseguroBadge />}
+                      </div>
                     </div>
                   </TableCell>
 
@@ -292,7 +317,7 @@ export default function ListadoObraSocial({
 
                   <TableCell className="text-slate-500 text-sm">
                     {new Date(obra.fechaHoraObraSocial).toLocaleDateString(
-                      "es-AR"
+                      "es-AR",
                     )}
                   </TableCell>
 
@@ -308,4 +333,3 @@ export default function ListadoObraSocial({
     </>
   );
 }
- 

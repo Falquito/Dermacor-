@@ -1,62 +1,62 @@
-import { NextResponse, NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { verifyAuth } from '@/lib/apiAuth'
-
+import { NextResponse, NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { verifyAuth } from "@/lib/apiAuth";
 
 export async function PATCH(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   const auth = await verifyAuth(request);
   if (auth.error) return auth.response;
 
   try {
-    const body = await request.json()
-    const { id } = await params
+    const body = await request.json();
+    const { id } = await params;
 
     const obraActualizada = await prisma.obraSocial.update({
       where: { idObraSocial: +id },
       data: {
-        nombreObraSocial: body.nombreObraSocial
-      }
-    })
+        nombreObraSocial: body.nombreObraSocial,
+        admiteCoseguro: body.admiteCoseguro ?? false,
+      },
+    });
 
-    return NextResponse.json(obraActualizada)
+    return NextResponse.json(obraActualizada);
   } catch {
-    return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 })
+    return NextResponse.json({ error: "Error al actualizar" }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   const auth = await verifyAuth(request);
   if (auth.error) return auth.response;
 
   try {
-    const { id } = await params
+    const { id } = await params;
     const obraSocial = await prisma.obraSocial.findUnique({
-      where:{
-        idObraSocial:+id
-      }
-    })
+      where: {
+        idObraSocial: +id,
+      },
+    });
 
     if (!obraSocial) {
       return NextResponse.json(
-        { error: 'Obra social no encontrada' }, 
-        { status: 404 }
-      )
+        { error: "Obra social no encontrada" },
+        { status: 404 },
+      );
     }
     await prisma.obraSocial.update({
       where: { idObraSocial: +id },
       data: {
-        estadoObraSocial: !obraSocial.estadoObraSocial
-      }
-    })
+        estadoObraSocial: !obraSocial.estadoObraSocial,
+      },
+    });
 
-    return NextResponse.json({ message: 'Eliminado correctamente' })
+    return NextResponse.json({ message: "Eliminado correctamente" });
   } catch {
-    return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 })
+    return NextResponse.json({ error: "Error al eliminar" }, { status: 500 });
   }
 }

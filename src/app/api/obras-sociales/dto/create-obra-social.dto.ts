@@ -1,3 +1,4 @@
 export type CreateObraSocialDto = {
-    nombreObraSocial:string
-}
+  nombreObraSocial: string;
+  admiteCoseguro: boolean;
+};

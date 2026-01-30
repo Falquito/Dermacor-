@@ -1,3 +1,4 @@
 export type InputsCreateObraSocial = {
-  name: string
-}
+  name: string;
+  admiteCoseguro: boolean;
+};

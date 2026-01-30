@@ -9,6 +9,7 @@ import {
   ShieldPlus,
 } from "lucide-react"
 import LogoComponent from "@/components/Logo"
+import EstadisticasGrid from "@/components/estadisticas/EstadisticasGrid"
 
 export default function Home() {
   return (
@@ -140,6 +141,11 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Estadísticas */}
+      <div className="pt-2">
+        <EstadisticasGrid />
+      </div>
     </div>
   )
-} 
+}

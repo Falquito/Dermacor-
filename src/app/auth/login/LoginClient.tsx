@@ -62,6 +62,12 @@ function LoginContent() {
       });
 
       if (res?.ok) {
+        // Resetear sidebar a estado abierto al iniciar sesión
+        try {
+          localStorage.setItem("sidebar-collapsed", "false");
+        } catch {
+          // Ignorar errores de localStorage
+        }
         router.replace(callbackUrl);
         router.refresh();
       } else {
@@ -119,7 +125,7 @@ function LoginContent() {
           
           {/* Logo en esquina superior izquierda - Solo desktop, responsive */}
           <div className="hidden lg:block absolute top-5 left-5 xl:top-6 xl:left-8 2xl:top-8 2xl:left-10 z-20">
-            <LogoComponent className="lg:text-xl xl:text-2xl 2xl:text-3xl" />
+            <LogoComponent className="lg:text-xl xl:text-2xl 2xl:text-3xl" showIcon />
           </div>
 
           {/* Contenedor centrado del formulario */}
@@ -136,7 +142,7 @@ function LoginContent() {
               {/* Header con logo - Logo visible solo en móvil dentro de la tarjeta */}
               <div className="mb-5 sm:mb-6 lg:mb-8 text-center lg:text-left">
                 <div className="flex items-center justify-center gap-2 mb-4 sm:mb-5 lg:hidden">
-                  <LogoComponent size="md" />
+                  <LogoComponent size="md" showIcon />
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl lg:text-[1.75rem] xl:text-3xl font-bold text-gray-900 mb-1.5 lg:mb-2 tracking-tight">

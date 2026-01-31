@@ -163,9 +163,9 @@ export async function POST(req: NextRequest, { params }: Ctx): Promise<Response>
 
     // Validación condicional según tipo de consulta
     if (tipoConsulta === "particular") {
-      if (!montoConsulta || typeof montoConsulta !== "number") {
+      if (montoConsulta !== undefined && montoConsulta !== null && typeof montoConsulta !== "number") {
         return NextResponse.json(
-          { error: "El monto es requerido para consultas particulares" },
+          { error: "El monto debe ser un número" },
           { status: 400 }
         );
       }
@@ -198,10 +198,10 @@ export async function POST(req: NextRequest, { params }: Ctx): Promise<Response>
           );
         }
       } else if (tieneCoseguro === false) {
-        // Si no tiene coseguro, validar que montoConsulta sea un número
-        if (!montoConsulta || typeof montoConsulta !== "number") {
+        // Si no tiene coseguro, validar que montoConsulta sea un número válido si se proporciona
+        if (montoConsulta !== undefined && montoConsulta !== null && typeof montoConsulta !== "number") {
           return NextResponse.json(
-            { error: "El monto es requerido cuando no tiene coseguro" },
+            { error: "El monto debe ser un número" },
             { status: 400 }
           );
         }
@@ -268,10 +268,7 @@ export async function POST(req: NextRequest, { params }: Ctx): Promise<Response>
         tipoConsulta: tipoConsulta,
         tieneCoseguro:
           tipoConsulta === "obra-social" ? tieneCoseguro : null,
-        montoConsulta:
-          tipoConsulta === "particular" || (tipoConsulta === "obra-social" && !tieneCoseguro)
-            ? montoConsulta
-            : null,
+        montoConsulta: montoConsulta ?? 0,
         idPaciente,
         idObraSocial:
           tipoConsulta === "obra-social" ? idObraSocial : null,

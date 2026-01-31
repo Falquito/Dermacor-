@@ -32,7 +32,6 @@ function startOfNextMonth(d: Date) {
 // random estable (reproducible)
 let SEED = 1234567;
 function rand() {
-  // LCG
   SEED = (SEED * 48271) % 0x7fffffff;
   return SEED / 0x7fffffff;
 }
@@ -47,11 +46,20 @@ function randomTimeWithinDay(day: Date) {
   d.setHours(randomInt(8, 19), randomInt(0, 59), randomInt(0, 59), 0);
   return d;
 }
+function chance(p: number) {
+  return rand() < p;
+}
 
 /* ---------------- Seed ---------------- */
 async function main() {
-  // Limpieza (orden importante por FKs)
+  // Limpieza (orden importante por FKs y Restrict)
   await prisma.consultas.deleteMany();
+
+  // NextAuth
+  await prisma.account.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.verificationToken.deleteMany();
+
   await prisma.paciente.deleteMany();
   await prisma.coseguro.deleteMany();
   await prisma.obraSocial.deleteMany();
@@ -61,22 +69,22 @@ async function main() {
   const hashedPassword = await bcrypt.hash("Hola1234!", 12);
   await prisma.user.create({
     data: {
-      name: "USUARIO",
+      name: "Admin",
       email: "admin@derm.local",
       password: hashedPassword,
-      role: "admin",
+      role: "ADMIN",
     },
   });
-  console.log("✓ Usuario admin creado: admin@derm.local");
+  console.log("✓ Usuario admin creado: admin@derm.local / Hola1234!");
 
-  // 1) Obras Sociales
+  // 1) Obras Sociales (algunas admiten coseguro)
   const obrasSocialesData = [
-    { nombreObraSocial: "OSDE" },
-    { nombreObraSocial: "Swiss Medical" },
-    { nombreObraSocial: "Galeno" },
-    { nombreObraSocial: "Sancor Salud" },
-    { nombreObraSocial: "IOMA" },
-    { nombreObraSocial: "PAMI" },
+    { nombreObraSocial: "OSDE", admiteCoseguro: true },
+    { nombreObraSocial: "Swiss Medical", admiteCoseguro: true },
+    { nombreObraSocial: "Galeno", admiteCoseguro: true },
+    { nombreObraSocial: "Sancor Salud", admiteCoseguro: false },
+    { nombreObraSocial: "IOMA", admiteCoseguro: true },
+    { nombreObraSocial: "PAMI", admiteCoseguro: false },
   ];
 
   await prisma.obraSocial.createMany({
@@ -120,7 +128,7 @@ async function main() {
 
   const last30Start = startOfDay(addDays(now, -29));
 
-  // 3) Pacientes (30) con fechas distribuidas + algunos inactivos
+  // 3) Pacientes (30)
   const nombres: Array<[string, string]> = [
     ["Juan", "Pérez"],
     ["María", "Gómez"],
@@ -156,30 +164,26 @@ async function main() {
 
   const baseDni = 35000000;
 
-  // Queremos que no “calcen” perfecto: variamos un poco
   const nuevos30d = randomInt(12, 18);
   const inactivosCount = randomInt(5, 9);
 
-  const pacientes: any[] = [];
+  const pacientes: Array<{ idPaciente: number; estadoPaciente: boolean }> = [];
+
   for (let i = 0; i < 30; i++) {
     const [nombrePaciente, apellidoPaciente] = nombres[i];
     const dniPaciente = String(baseDni + i);
     const telefonoPaciente = `351${pad(1000000 + i, 7)}`;
     const domicilioPaciente = `Calle ${i + 1} #${100 + i}`;
 
-    // Fecha creación
     let fechaHoraPaciente: Date;
     if (i < nuevos30d) {
-      // dentro de últimos 30 días
       const day = addDays(last30Start, randomInt(0, 29));
       fechaHoraPaciente = randomTimeWithinDay(day);
     } else {
-      // más viejo: entre 31 y 240 días atrás (más variación)
       const day = startOfDay(addDays(now, -randomInt(31, 240)));
       fechaHoraPaciente = randomTimeWithinDay(day);
     }
 
-    // Estado: algunos inactivos (por ejemplo los últimos)
     const estadoPaciente = i < 30 - inactivosCount;
 
     const p = await prisma.paciente.create({
@@ -192,20 +196,19 @@ async function main() {
         estadoPaciente,
         fechaHoraPaciente,
       },
+      select: { idPaciente: true, estadoPaciente: true },
     });
 
     pacientes.push(p);
   }
 
-  // sesgo realista: activos consultan más
   function pickPacienteConSesgo() {
     const activos = pacientes.filter((p) => p.estadoPaciente);
     if (activos.length === 0) return pick(pacientes);
-    // 75% elige activos, 25% cualquiera
     return rand() < 0.75 ? pick(activos) : pick(pacientes);
   }
 
-  // 4) Consultas: bloques
+  // 4) Consultas
   const motivos = [
     "Control general",
     "Dermatitis",
@@ -245,17 +248,64 @@ async function main() {
     "Vitaminas y control",
   ];
 
-  const tiposConsulta = ["obra-social", "particular"] as const;
+  const estudios = [
+    "Dermatoscopía",
+    "Biopsia",
+    "Laboratorio básico",
+    "Cultivo micológico",
+    "Test de parche",
+    "Fotografía clínica",
+  ];
 
-  // 4.1) Serie últimos 30 días (semanas buenas/malas + finde más bajo)
+  // ✅ ÚNICOS valores permitidos
+  const tiposConsulta = ["Obra social", "Particular"] as const;
+  type TipoConsulta = (typeof tiposConsulta)[number];
+
+  async function createConsulta(day: Date) {
+    const paciente = pickPacienteConSesgo();
+    const tipo: TipoConsulta = pick([...tiposConsulta]);
+
+    const usaObra = tipo === "Obra social";
+    const obra = pick(obrasSociales);
+    const cos = pick(coseguros);
+
+    const puedeCoseguro = usaObra && obra.admiteCoseguro;
+    const idCoseguro = puedeCoseguro && chance(0.25) ? cos.idCoseguro : null;
+
+    await prisma.consultas.create({
+      data: {
+        idPaciente: paciente.idPaciente,
+
+        // coherencia con tipoConsulta
+        idObraSocial: usaObra ? obra.idObraSocial : null,
+        nroAfiliado: usaObra
+          ? `AF-${obra.idObraSocial}-${pad(paciente.idPaciente, 4)}`
+          : null,
+
+        idCoseguro,
+        tieneCoseguro: idCoseguro ? true : false,
+
+        tipoConsulta: tipo,
+        montoConsulta: tipo === "Particular" ? 6500 + randomInt(0, 14) * 350 : null,
+
+        motivoConsulta: pick(motivos),
+        diagnosticoConsulta: chance(0.12) ? null : pick(diagnosticos),
+        tratamientoConsulta: chance(0.15) ? null : pick(tratamientos),
+        estudiosComplementarios: chance(0.65) ? null : pick(estudios),
+
+        fechaHoraConsulta: randomTimeWithinDay(day),
+      },
+    });
+  }
+
+  // 4.1) últimos 30 días
   for (let d = 0; d < 30; d++) {
     const day = addDays(last30Start, d);
-    const weekday = day.getDay(); // 0 dom - 6 sáb
+    const weekday = day.getDay();
 
     let n = 0;
-
-    if (weekday === 0) n = randomInt(0, 1); // domingo
-    else if (weekday === 6) n = randomInt(0, 2); // sábado
+    if (weekday === 0) n = randomInt(0, 1);
+    else if (weekday === 6) n = randomInt(0, 2);
     else {
       const roll = rand();
       if (roll < 0.18) n = 0;
@@ -266,53 +316,20 @@ async function main() {
     }
 
     for (let k = 0; k < n; k++) {
-      const paciente = pickPacienteConSesgo();
-      const tipo = pick([...tiposConsulta]);
-      const obra = pick(obrasSociales);
-      const cos = pick(coseguros);
-
-      await prisma.consultas.create({
-        data: {
-          idPaciente: paciente.idPaciente,
-          idObraSocial: tipo === "obra-social" ? obra.idObraSocial : null,
-          idCoseguro:
-            tipo === "obra-social" && rand() < 0.3 ? cos.idCoseguro : null,
-
-          motivoConsulta: pick(motivos),
-          diagnosticoConsulta: pick(diagnosticos),
-          tratamientoConsulta: pick(tratamientos),
-
-          nroAfiliado:
-            tipo === "obra-social"
-              ? `AF-${obra.idObraSocial}-${pad(paciente.idPaciente, 4)}`
-              : null,
-
-          tipoConsulta: tipo,
-          montoConsulta:
-            tipo === "particular" ? 6000 + randomInt(0, 10) * 400 : null,
-
-          fechaHoraConsulta: randomTimeWithinDay(day),
-        },
-      });
+      await createConsulta(day);
     }
   }
 
-  // 4.2) Asegurar KPI mes actual (más alto, y NO “igual” a lo de últimos 30)
+  // 4.2) KPI mes actual (más alto)
   const targetMesActual = randomInt(42, 68);
 
   const actualesYaCreadas = await prisma.consultas.count({
     where: { fechaHoraConsulta: { gte: monthStart, lt: nextMonthStart } },
   });
 
-  const faltanMesActual = Math.max(0, targetMesActual - actualesYaCreadas);
+  let faltanMesActual = Math.max(0, targetMesActual - actualesYaCreadas);
 
-  for (let i = 0; i < faltanMesActual; i++) {
-    const paciente = pickPacienteConSesgo();
-    const tipo = pick([...tiposConsulta]);
-    const obra = pick(obrasSociales);
-    const cos = pick(coseguros);
-
-    // fecha aleatoria dentro del mes actual (hasta hoy)
+  while (faltanMesActual > 0) {
     const maxDayOffset = Math.max(
       0,
       Math.floor(
@@ -322,36 +339,14 @@ async function main() {
     );
     const day = addDays(monthStart, randomInt(0, maxDayOffset));
 
-    // para que no se “parezca” a la serie: metemos más controles en días hábiles
     const isWeekend = [0, 6].includes(day.getDay());
-    if (isWeekend && rand() < 0.6) continue; // salteamos muchos findes
+    if (isWeekend && chance(0.6)) continue;
 
-    await prisma.consultas.create({
-      data: {
-        idPaciente: paciente.idPaciente,
-        idObraSocial: tipo === "obra-social" ? obra.idObraSocial : null,
-        idCoseguro:
-          tipo === "obra-social" && rand() < 0.22 ? cos.idCoseguro : null,
-
-        motivoConsulta: pick(motivos),
-        diagnosticoConsulta: pick(diagnosticos),
-        tratamientoConsulta: pick(tratamientos),
-
-        nroAfiliado:
-          tipo === "obra-social"
-            ? `AF-${obra.idObraSocial}-${pad(paciente.idPaciente, 4)}`
-            : null,
-
-        tipoConsulta: tipo,
-        montoConsulta:
-          tipo === "particular" ? 6500 + randomInt(0, 12) * 350 : null,
-
-        fechaHoraConsulta: randomTimeWithinDay(startOfDay(day)),
-      },
-    });
+    await createConsulta(startOfDay(day));
+    faltanMesActual--;
   }
 
-  // 4.3) Mes anterior: más bajo para delta claro (y distinto)
+  // 4.3) mes anterior (más bajo)
   const targetMesAnterior = randomInt(14, 26);
 
   const anterioresYaCreadas = await prisma.consultas.count({
@@ -360,53 +355,17 @@ async function main() {
 
   const faltanMesAnterior = Math.max(0, targetMesAnterior - anterioresYaCreadas);
 
+  const daysPrevMonth = Math.floor(
+    (prevNextMonthStart.getTime() - prevMonthStart.getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
+
   for (let i = 0; i < faltanMesAnterior; i++) {
-    const paciente = rand() < 0.55 ? pick(pacientes) : pickPacienteConSesgo(); // mezcla para no “clonar”
-    const tipo = pick([...tiposConsulta]);
-    const obra = pick(obrasSociales);
-    const cos = pick(coseguros);
-
-    // fecha aleatoria dentro del mes anterior
-    const daysPrevMonth = Math.floor(
-      (prevNextMonthStart.getTime() - prevMonthStart.getTime()) /
-        (1000 * 60 * 60 * 24)
-    );
     const day = addDays(prevMonthStart, randomInt(0, Math.max(0, daysPrevMonth - 1)));
-
-    await prisma.consultas.create({
-      data: {
-        idPaciente: paciente.idPaciente,
-        idObraSocial: tipo === "obra-social" ? obra.idObraSocial : null,
-        idCoseguro:
-          tipo === "obra-social" && rand() < 0.18 ? cos.idCoseguro : null,
-
-        motivoConsulta: pick(motivos),
-        diagnosticoConsulta: pick(diagnosticos),
-        tratamientoConsulta: pick(tratamientos),
-
-        nroAfiliado:
-          tipo === "obra-social"
-            ? `AF-${obra.idObraSocial}-${pad(paciente.idPaciente, 4)}`
-            : null,
-
-        tipoConsulta: tipo,
-        montoConsulta:
-          tipo === "particular" ? 5800 + randomInt(0, 10) * 300 : null,
-
-        fechaHoraConsulta: randomTimeWithinDay(startOfDay(day)),
-      },
-    });
+    await createConsulta(startOfDay(day));
   }
 
   // Resumen
-  const countOS = await prisma.obraSocial.count();
-  const countCos = await prisma.coseguro.count();
-  const countPac = await prisma.paciente.count();
-  const countCons = await prisma.consultas.count();
-
-  const activos = await prisma.paciente.count({ where: { estadoPaciente: true } });
-  const inactivos = await prisma.paciente.count({ where: { estadoPaciente: false } });
-
   const mesActual = await prisma.consultas.count({
     where: { fechaHoraConsulta: { gte: monthStart, lt: nextMonthStart } },
   });
@@ -414,21 +373,14 @@ async function main() {
     where: { fechaHoraConsulta: { gte: prevMonthStart, lt: prevNextMonthStart } },
   });
 
-  const nuevos30 = await prisma.paciente.count({
-    where: { fechaHoraPaciente: { gte: last30Start, lt: addDays(startOfDay(now), 1) } },
-  });
-
   console.log("Seed OK ✅");
   console.log({
-    obrasSociales: countOS,
-    coseguros: countCos,
-    pacientes: countPac,
-    pacientesActivos: activos,
-    pacientesInactivos: inactivos,
-    consultas: countCons,
+    obrasSociales: await prisma.obraSocial.count(),
+    coseguros: await prisma.coseguro.count(),
+    pacientes: await prisma.paciente.count(),
+    consultas: await prisma.consultas.count(),
     consultasMesActual: mesActual,
     consultasMesAnterior: mesAnterior,
-    pacientesNuevos30Dias: nuevos30,
   });
 }
 

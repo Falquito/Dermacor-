@@ -259,8 +259,8 @@ export default function HistorialConsultasLista({
 
               {/* Detalles adicionales - Condicional según tipo */}
               {consulta.tipoConsulta === "particular" ? (
-                // Para consultas particulares: mostrar monto
-                consulta.montoConsulta && (
+                // Para consultas particulares: mostrar monto si es distinto de 0
+                consulta.montoConsulta != null && consulta.montoConsulta !== 0 ? (
                   <div className="pt-2 border-t border-cyan-100">
                     <p className="text-xs font-medium text-muted-foreground">
                       Monto:
@@ -269,7 +269,7 @@ export default function HistorialConsultasLista({
                       ${consulta.montoConsulta.toFixed(2)}
                     </p>
                   </div>
-                )
+                ) : null
               ) : (
                 // Para consultas de obra social: mostrar nro de afiliado, coseguro y monto
                 <div className="pt-2 border-t border-cyan-100 space-y-2">
@@ -293,7 +293,7 @@ export default function HistorialConsultasLista({
                       </p>
                     </div>
                   )}
-                  {consulta.montoConsulta && (
+                  {consulta.montoConsulta != null && consulta.montoConsulta !== 0 && (
                     <div>
                       <p className="text-xs font-medium text-muted-foreground">
                         Monto:

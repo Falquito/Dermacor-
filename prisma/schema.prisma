@@ -16,13 +16,16 @@ model Paciente {
   telefonoPaciente  String?
   domicilioPaciente String?
   dniPaciente       String   @unique
+
+  fechaNacimiento   DateTime?
+
   fechaHoraPaciente DateTime @default(now())
   estadoPaciente    Boolean  @default(true)
 
   // Relaciones
   consultas         Consultas[]
-  
 }
+
 
 model ObraSocial {
   idObraSocial        Int      @id @default(autoincrement())

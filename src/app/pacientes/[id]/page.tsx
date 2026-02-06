@@ -308,6 +308,7 @@ function PacienteDetailContent() {
               idPaciente={paciente.idPaciente}
               nombrePaciente={paciente.nombrePaciente}
               apellidoPaciente={paciente.apellidoPaciente}
+              tieneConsultas={consultas.length > 0}
             />
           </div>
           <RegistrarConsultaForm

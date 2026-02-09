@@ -12,7 +12,7 @@ interface Lesson {
 
 export default function ReproductorVideo({ activeLesson }: { activeLesson: Lesson }) {
     const [hasWindow, setHasWindow] = useState(false);
-    const [isLoading, setIsLoading] = useState(true); 
+    const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
         setHasWindow(true);
     }, []);
@@ -21,8 +21,8 @@ export default function ReproductorVideo({ activeLesson }: { activeLesson: Lesso
         setIsLoading(true);
     }, [activeLesson.videoId]);
 
-    const videoUrl = activeLesson.videoId.includes("http") 
-        ? activeLesson.videoId 
+    const videoUrl = activeLesson.videoId.includes("http")
+        ? activeLesson.videoId
         : `https://www.youtube.com/watch?v=${activeLesson.videoId}`;
 
     if (!hasWindow) {
@@ -31,12 +31,12 @@ export default function ReproductorVideo({ activeLesson }: { activeLesson: Lesso
 
     return (
         <div className="relative w-full aspect-video group my-4">
-            
-        
+
+
 
             <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl bg-slate-950 ring-1 ring-white/10 z-10">
-                
-        
+
+
                 {isLoading && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-20 transition-opacity duration-300">
                         <Loader2 className="w-10 h-10 text-cyan-500 animate-spin mb-2" />
@@ -50,22 +50,22 @@ export default function ReproductorVideo({ activeLesson }: { activeLesson: Lesso
                     width="100%"
                     height="100%"
                     controls={true}
-                    playing={false} 
-                    
+                    playing={false}
+
                     onReady={() => setIsLoading(false)}
-                    
+
                     onError={() => setIsLoading(false)}
 
                     config={{
                         youtube: {
-                            playerVars: { 
-                                showinfo: 0, 
+                            playerVars: {
+                                showinfo: 0,
                                 modestbranding: 1,
-                                rel: 0 
+                                rel: 0
                             }
-                        } as any 
+                        } as any
                     }}
-                    style={{ backgroundColor: '#020617' }} 
+                    style={{ backgroundColor: '#020617' }}
                 />
 
                 <div className="absolute top-4 left-4 pointer-events-none z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">

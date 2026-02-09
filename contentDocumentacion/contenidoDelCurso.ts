@@ -2,28 +2,27 @@ export const courseContent = [
   {
     title: "Módulo 1: Introducción al Sistema",
     lessons: [
-      { id: 101, title: "Primeros pasos", duration: "00:30", videoId: "dQw4w9WgXcQ", completed: false },
-      { id: 102, title: "Crear cuenta", duration: "5:45", videoId: "5qap5aO4i9A", completed: false },
-      { id: 103, title: "Iniciar sesion", duration: "5:45", videoId: "5qap5aO4i9A", completed: false },
-      { id: 104, title: "Paginas", duration: "5:45", videoId: "5qap5aO4i9A", completed: false },
+      { id: 101, title: "Primeros pasos", duration: "00:31", videoId: "jDRGs9SeeFw", completed: false },
+      { id: 102, title: "Crear cuenta", duration: "00:39", videoId: "nyIehHULJqM", completed: false },
+      { id: 103, title: "Iniciar sesion", duration: "00:28", videoId: "8hXGDp_xqoE", completed: false },
+      { id: 104, title: "Paginas", duration: "00:42", videoId: "gLlIWD_u7GA", completed: false },
     ]
   },
   {
     title: "Módulo 2: Gestión de Obras Sociales",
     lessons: [
-      { id: 201, title: "Bienvenida al modulo", duration: "8:10", videoId: "LXb3EKWsInQ", completed: false },
-      { id: 202, title: "Crear una nueva obra social", duration: "6:20", videoId: "jNQXAC9IVRw", completed: false },
-      { id: 203, title: "Editar una obra social", duration: "3:15", videoId: "9bZkp7q19f0", completed: false },
-      { id: 204, title: "Desactivar una obra social", duration: "3:15", videoId: "9bZkp7q19f0", completed: false }
+      { id: 202, title: "Crear una nueva obra social", duration: "1:06", videoId: "oFD8ld1vFKI", completed: false },
+      { id: 203, title: "Editar una obra social", duration: "00:42", videoId: "T0EMorfJWjE", completed: false },
+      { id: 204, title: "Desactivar y Restaurar una obra social", duration: "00:43", videoId: "pNXca3L8hNs", completed: false }
     ]
   },
   {
     title: "Módulo 3: Gestion de Pacientes",
     lessons: [
-      { id: 301, title: "Bienvenida al modulo", duration: "4:50", videoId: "C0DPdy98e4c", completed: false },
-      { id: 302, title: "Crear un paciente", duration: "4:50", videoId: "C0DPdy98e4c", completed: false },
-      { id: 303, title: "Editar un paciente", duration: "4:50", videoId: "C0DPdy98e4c", completed: false },
-      { id: 304, title: "Desactivar un paciente", duration: "4:50", videoId: "C0DPdy98e4c", completed: false }
+      { id: 302, title: "Crear un paciente", duration: "00:57", videoId: "jOH-PY-7cgk", completed: false },
+      { id: 303, title: "Editar un paciente", duration: "00:34", videoId: "Wuf7Jxi5avA", completed: false },
+      { id: 304, title: "Dar de alta y baja a un paciente", duration: "00:48", videoId: "vWQmoMZZksE", completed: false },
+      { id: 305, title: "Ver historial clinico y guardar consulta", duration: "", videoId: "vWQmoMZZksE", completed: false }
     ]
   }
 ];
